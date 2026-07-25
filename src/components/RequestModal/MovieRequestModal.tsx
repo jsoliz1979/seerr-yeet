@@ -13,6 +13,7 @@ import type { NonFunctionProperties } from '@server/interfaces/api/common';
 import type { QuotaResponse } from '@server/interfaces/api/userInterfaces';
 import { Permission } from '@server/lib/permissions';
 import type { MovieDetails } from '@server/models/Movie';
+import { getMovieRootFolderForReleaseDate } from '@server/utils/movieRootFolder';
 import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
@@ -363,6 +364,9 @@ const MovieRequestModal = ({
         <AdvancedRequester
           type="movie"
           is4k={is4k}
+          preferredRootFolder={getMovieRootFolderForReleaseDate(
+            data?.releaseDate
+          )}
           quota={quota}
           onChange={(overrides) => {
             setRequestOverrides(overrides);

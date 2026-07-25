@@ -58,6 +58,7 @@ interface AdvancedRequesterProps {
   type: 'movie' | 'tv';
   is4k: boolean;
   isAnime?: boolean;
+  preferredRootFolder?: string;
   defaultOverrides?: RequestOverrides;
   requestUser?: User;
   quota?: { movie: { limit?: number }; tv: { limit?: number } };
@@ -68,6 +69,7 @@ const AdvancedRequester = ({
   type,
   is4k = false,
   isAnime = false,
+  preferredRootFolder,
   defaultOverrides,
   requestUser,
   quota,
@@ -200,13 +202,17 @@ const AdvancedRequester = ({
             ? serverData.server.activeAnimeProfileId
             : serverData.server.activeProfileId)
       );
-      const defaultFolder = serverData.rootFolders.find(
+      const configuredDefaultFolder = serverData.rootFolders.find(
         (folder) =>
           folder.path ===
           (isAnime && serverData.server.activeAnimeDirectory
             ? serverData.server.activeAnimeDirectory
             : serverData.server.activeDirectory)
       );
+      const preferredFolder = serverData.rootFolders.find(
+        (folder) => folder.path === preferredRootFolder
+      );
+      const defaultFolder = preferredFolder ?? configuredDefaultFolder;
       const defaultLanguage = serverData.languageProfiles?.find(
         (language) =>
           language.id ===

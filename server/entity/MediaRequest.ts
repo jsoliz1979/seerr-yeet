@@ -14,6 +14,7 @@ import { Permission } from '@server/lib/permissions';
 import { getSettings } from '@server/lib/settings';
 import logger from '@server/logger';
 import { DbAwareColumn, resolveDbType } from '@server/utils/DbColumnHelper';
+import { getMovieRootFolderForReleaseDate } from '@server/utils/movieRootFolder';
 import { truncate } from 'lodash';
 import {
   AfterInsert,
@@ -364,6 +365,12 @@ export class MediaRequest {
     }
 
     if (requestBody.mediaType === MediaType.MOVIE) {
+      rootFolder =
+        rootFolder ??
+        getMovieRootFolderForReleaseDate(
+          'release_date' in tmdbMedia ? tmdbMedia.release_date : undefined
+        );
+
       await mediaRepository.save(media);
 
       const request = new MediaRequest({
