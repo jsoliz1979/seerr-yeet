@@ -7,13 +7,17 @@ import useToasts from '@app/hooks/useToasts';
 import { useUser } from '@app/hooks/useUser';
 import globalMessages from '@app/i18n/globalMessages';
 import defineMessages from '@app/utils/defineMessages';
+import { MapPinIcon } from '@heroicons/react/24/solid';
 import { MediaStatus } from '@server/constants/media';
 import type { MediaRequest } from '@server/entity/MediaRequest';
 import type { NonFunctionProperties } from '@server/interfaces/api/common';
 import type { QuotaResponse } from '@server/interfaces/api/userInterfaces';
 import { Permission } from '@server/lib/permissions';
 import type { MovieDetails } from '@server/models/Movie';
-import { getMovieRootFolderForReleaseDate } from '@server/utils/movieRootFolder';
+import {
+  getMovieRootFolderForReleaseDate,
+  OLD_MOVIE_ROOT_FOLDER,
+} from '@server/utils/movieRootFolder';
 import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
@@ -36,6 +40,14 @@ const messages = defineMessages('components.RequestModal', {
   requestApproved: 'Request for <strong>{title}</strong> approved!',
   requesterror: 'Something went wrong while submitting the request.',
   pendingapproval: 'Your request is pending approval.',
+  oldMoviesDestination: 'PLEX DESTINATION: OLD MOVIES',
+  oldMoviesDestinationDescription:
+    'Released in {year}. After it downloads, look for this movie in the <strong>Old Movies</strong> library in Plex. No action is needed.',
+  oldMoviesDestinationDescriptionUnknown:
+    'After it downloads, look for this movie in the <strong>Old Movies</strong> library in Plex. No action is needed.',
+  newMoviesDestination: 'PLEX DESTINATION: NEW MOVIES',
+  newMoviesDestinationDescription:
+    'After it downloads, look for this movie in the <strong>New Movies</strong> library in Plex. No action is needed.',
 });
 
 interface RequestModalProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -315,6 +327,13 @@ const MovieRequestModal = ({
     ],
     { type: 'or' }
   );
+  const automaticRootFolder = getMovieRootFolderForReleaseDate(
+    data?.releaseDate
+  );
+  const isOldMoviesDestination = requestOverrides?.folder
+    ? requestOverrides.folder === OLD_MOVIE_ROOT_FOLDER
+    : automaticRootFolder === OLD_MOVIE_ROOT_FOLDER;
+  const releaseYear = data?.releaseDate?.slice(0, 4);
 
   return (
     <Modal
@@ -340,6 +359,61 @@ const MovieRequestModal = ({
       okButtonType={'primary'}
       backdrop={`https://image.tmdb.org/t/p/w1920_and_h800_multi_faces/${data?.backdropPath}`}
     >
+      <div
+        role="status"
+        aria-live="polite"
+        className={`relative mt-6 overflow-hidden rounded-lg border-2 p-5 shadow-lg ${
+          isOldMoviesDestination
+            ? 'border-amber-400 bg-gradient-to-r from-amber-500/30 via-orange-500/20 to-amber-500/30 shadow-amber-500/30'
+            : 'border-indigo-400 bg-gradient-to-r from-indigo-500/30 via-purple-500/20 to-indigo-500/30 shadow-indigo-500/30'
+        }`}
+      >
+        <div
+          aria-hidden="true"
+          className={`absolute inset-0 motion-safe:animate-pulse ${
+            isOldMoviesDestination ? 'bg-amber-400/10' : 'bg-indigo-400/10'
+          }`}
+        />
+        <div className="relative flex items-start">
+          <div
+            className={`mr-4 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full motion-safe:animate-pulse ${
+              isOldMoviesDestination
+                ? 'bg-amber-400 text-amber-950 ring-4 ring-amber-300/30'
+                : 'bg-indigo-400 text-indigo-950 ring-4 ring-indigo-300/30'
+            }`}
+          >
+            <MapPinIcon className="h-7 w-7" />
+          </div>
+          <div>
+            <div
+              className={`text-base font-extrabold tracking-wide ${
+                isOldMoviesDestination ? 'text-amber-100' : 'text-indigo-100'
+              }`}
+            >
+              {intl.formatMessage(
+                isOldMoviesDestination
+                  ? messages.oldMoviesDestination
+                  : messages.newMoviesDestination
+              )}
+            </div>
+            <div className="mt-1 text-sm font-medium text-gray-100">
+              {intl.formatMessage(
+                isOldMoviesDestination
+                  ? releaseYear
+                    ? messages.oldMoviesDestinationDescription
+                    : messages.oldMoviesDestinationDescriptionUnknown
+                  : messages.newMoviesDestinationDescription,
+                {
+                  year: releaseYear,
+                  strong: (msg: React.ReactNode) => (
+                    <strong className="font-extrabold text-white">{msg}</strong>
+                  ),
+                }
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
       {hasAutoApprove && !quota?.movie.restricted && (
         <div className="mt-6">
           <Alert
