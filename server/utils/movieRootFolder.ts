@@ -1,8 +1,8 @@
-export const OLD_MOVIE_CUTOFF_YEAR = 2025;
 export const OLD_MOVIE_ROOT_FOLDER = 'O:\\movies\\Old Movies';
 
 export const getMovieRootFolderForReleaseDate = (
-  releaseDate?: string
+  releaseDate?: string,
+  currentYear = new Date().getFullYear()
 ): string | undefined => {
   if (!releaseDate) {
     return undefined;
@@ -12,7 +12,7 @@ export const getMovieRootFolderForReleaseDate = (
 
   return Number.isInteger(releaseYear) &&
     releaseYear > 0 &&
-    releaseYear <= OLD_MOVIE_CUTOFF_YEAR
+    releaseYear < currentYear
     ? OLD_MOVIE_ROOT_FOLDER
     : undefined;
 };
