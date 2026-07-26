@@ -156,6 +156,10 @@ export interface MainSettings {
   enableSpecialEpisodes: boolean;
   locale: string;
   youtubeUrl: string;
+  motdEnabled: boolean;
+  motdTitle: string;
+  motdMessage: string;
+  motdUpdatedAt: number;
 }
 
 export interface ProxySettings {
@@ -429,6 +433,10 @@ class Settings {
         enableSpecialEpisodes: false,
         locale: 'en',
         youtubeUrl: '',
+        motdEnabled: false,
+        motdTitle: 'Welcome!',
+        motdMessage: '',
+        motdUpdatedAt: 0,
       },
       plex: {
         name: '',

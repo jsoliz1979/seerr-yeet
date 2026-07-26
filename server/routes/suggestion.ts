@@ -10,10 +10,43 @@ import type {
   SuggestionStatusRequestBody,
 } from '@server/interfaces/api/suggestionInterfaces';
 import { Permission } from '@server/lib/permissions';
+import { getSettings } from '@server/lib/settings';
 import { isAuthenticated } from '@server/middleware/auth';
 import { Router } from 'express';
 
 const suggestionRoutes = Router();
+
+suggestionRoutes.get('/motd', isAuthenticated(), (_req, res) => {
+  const { motdEnabled, motdTitle, motdMessage, motdUpdatedAt } =
+    getSettings().main;
+  return res.json({ motdEnabled, motdTitle, motdMessage, motdUpdatedAt });
+});
+
+suggestionRoutes.put(
+  '/motd',
+  isAuthenticated(Permission.ADMIN),
+  async (req, res, next) => {
+    const message = String(req.body.motdMessage ?? '').trim();
+    const title = String(req.body.motdTitle ?? '').trim();
+    if (message.length > 2000 || title.length > 100) {
+      return next({ status: 400, message: 'The MOTD is too long.' });
+    }
+
+    const settings = getSettings();
+    settings.main.motdEnabled = Boolean(req.body.motdEnabled);
+    settings.main.motdTitle = title || 'Welcome!';
+    settings.main.motdMessage = message;
+    settings.main.motdUpdatedAt = Date.now();
+    await settings.save();
+
+    return res.json({
+      motdEnabled: settings.main.motdEnabled,
+      motdTitle: settings.main.motdTitle,
+      motdMessage: settings.main.motdMessage,
+      motdUpdatedAt: settings.main.motdUpdatedAt,
+    });
+  }
+);
 
 suggestionRoutes.post<never, Suggestion, SuggestionRequestBody>(
   '/',

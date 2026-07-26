@@ -128,7 +128,14 @@ const MobileMenu = ({
     },
     {
       href: '/suggestions',
-      content: intl.formatMessage(menuMessages.suggestions),
+      content: (
+        <span className="flex items-center gap-1">
+          {intl.formatMessage(menuMessages.suggestions)}
+          <span className="animate-pulse rounded-full bg-pink-500 px-1.5 text-[9px] font-bold text-white">
+            NEW
+          </span>
+        </span>
+      ),
       svgIcon: <LightBulbIcon className="h-6 w-6" />,
       svgIconSelected: <FilledLightBulbIcon className="h-6 w-6" />,
       activeRegExp: /^\/suggestions/,

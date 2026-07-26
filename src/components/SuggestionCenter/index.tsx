@@ -2,6 +2,7 @@ import Button from '@app/components/Common/Button';
 import Header from '@app/components/Common/Header';
 import LoadingSpinner from '@app/components/Common/LoadingSpinner';
 import PageTitle from '@app/components/Common/PageTitle';
+import type { MotdSettings } from '@app/components/Layout/MessageOfTheDay';
 import useToasts from '@app/hooks/useToasts';
 import { Permission, useUser } from '@app/hooks/useUser';
 import defineMessages from '@app/utils/defineMessages';
@@ -11,7 +12,7 @@ import {
 } from '@server/constants/suggestion';
 import type { SuggestionResultsResponse } from '@server/interfaces/api/suggestionInterfaces';
 import axios from 'axios';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import useSWR from 'swr';
 
@@ -42,6 +43,14 @@ const messages = defineMessages('components.SuggestionCenter', {
   delete: 'Delete',
   deleteConfirm: 'Permanently delete this suggestion?',
   updateFailed: 'Could not update the suggestion.',
+  motdTitle: 'Message of the Day',
+  motdSubtitle:
+    'Write a welcome message that users will see when they begin a new Seerr session.',
+  popupTitle: 'Popup title',
+  popupMessage: 'Message',
+  motdEnabled: 'Show this message to users',
+  saveMotd: 'Save Message',
+  motdSaved: 'Message of the Day saved.',
 });
 
 const categoryLabels = {
@@ -72,6 +81,41 @@ const SuggestionCenter = () => {
       }`
     : null;
   const { data, mutate } = useSWR<SuggestionResultsResponse>(suggestionUrl);
+  const { data: motd, mutate: mutateMotd } = useSWR<MotdSettings>(
+    isAdmin ? '/api/v1/suggestion/motd' : null
+  );
+  const [motdTitle, setMotdTitle] = useState('');
+  const [motdMessage, setMotdMessage] = useState('');
+  const [motdEnabled, setMotdEnabled] = useState(false);
+
+  useEffect(() => {
+    if (motd) {
+      setMotdTitle(motd.motdTitle);
+      setMotdMessage(motd.motdMessage);
+      setMotdEnabled(motd.motdEnabled);
+    }
+  }, [motd]);
+
+  const saveMotd = async () => {
+    try {
+      await axios.put('/api/v1/suggestion/motd', {
+        motdTitle,
+        motdMessage,
+        motdEnabled,
+      });
+      await mutateMotd();
+      addToast(intl.formatMessage(messages.motdSaved), {
+        appearance: 'success',
+      });
+    } catch (error) {
+      const serverMessage =
+        axios.isAxiosError<{ message?: string }>(error) &&
+        error.response?.data.message;
+      addToast(serverMessage || intl.formatMessage(messages.updateFailed), {
+        appearance: 'error',
+      });
+    }
+  };
 
   const submitSuggestion = async () => {
     setSubmitting(true);
@@ -179,6 +223,47 @@ const SuggestionCenter = () => {
 
       {isAdmin && (
         <div className="mt-10">
+          <Header subtext={intl.formatMessage(messages.motdSubtitle)}>
+            {intl.formatMessage(messages.motdTitle)}
+          </Header>
+          <div className="my-5 grid gap-4 rounded-lg border border-purple-500/40 bg-gray-800 p-5">
+            <label className="text-sm font-medium text-gray-200">
+              {intl.formatMessage(messages.popupTitle)}
+              <input
+                className="mt-2 block w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
+                maxLength={100}
+                value={motdTitle}
+                onChange={(event) => setMotdTitle(event.target.value)}
+              />
+            </label>
+            <label className="text-sm font-medium text-gray-200">
+              {intl.formatMessage(messages.popupMessage)}
+              <textarea
+                className="mt-2 block min-h-28 w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
+                maxLength={2000}
+                value={motdMessage}
+                onChange={(event) => setMotdMessage(event.target.value)}
+              />
+            </label>
+            <label className="flex items-center gap-3 text-sm font-medium text-gray-200">
+              <input
+                type="checkbox"
+                checked={motdEnabled}
+                onChange={(event) => setMotdEnabled(event.target.checked)}
+              />
+              {intl.formatMessage(messages.motdEnabled)}
+            </label>
+            <div>
+              <Button
+                buttonType="primary"
+                disabled={!motdMessage.trim()}
+                onClick={() => saveMotd()}
+              >
+                {intl.formatMessage(messages.saveMotd)}
+              </Button>
+            </div>
+          </div>
+
           <Header subtext={intl.formatMessage(messages.adminSubtitle)}>
             {intl.formatMessage(messages.adminInbox)}
           </Header>

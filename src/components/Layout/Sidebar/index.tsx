@@ -236,6 +236,11 @@ const Sidebar = ({
                             {intl.formatMessage(
                               menuMessages[sidebarLink.messagesKey]
                             )}
+                            {sidebarLink.messagesKey === 'suggestions' && (
+                              <Badge className="ml-auto animate-pulse border-fuchsia-400 bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-lg shadow-pink-500/40">
+                                NEW
+                              </Badge>
+                            )}
                           </Link>
                         );
                       })}
@@ -295,6 +300,11 @@ const Sidebar = ({
                       {sidebarLink.svgIcon}
                       {intl.formatMessage(
                         menuMessages[sidebarLink.messagesKey]
+                      )}
+                      {sidebarLink.messagesKey === 'suggestions' && (
+                        <Badge className="ml-auto animate-pulse border-fuchsia-400 bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-lg shadow-pink-500/40">
+                          NEW
+                        </Badge>
                       )}
                       {sidebarLink.messagesKey === 'requests' &&
                         pendingRequestsCount > 0 &&
