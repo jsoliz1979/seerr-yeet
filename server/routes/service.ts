@@ -22,7 +22,7 @@ serviceRoutes.get('/status', async (_req, res) => {
   let storage: {
     path: string;
     freeSpace: number;
-    totalSpace: number;
+    totalSpace: number | null;
   } | null = null;
 
   if (radarrSettings) {
@@ -41,15 +41,13 @@ serviceRoutes.get('/status', async (_req, res) => {
         ) ??
         rootFolders[0];
 
-      if (
-        preferredRoot &&
-        Number.isFinite(preferredRoot.freeSpace) &&
-        Number.isFinite(preferredRoot.totalSpace)
-      ) {
+      if (preferredRoot && Number.isFinite(preferredRoot.freeSpace)) {
         storage = {
           path: preferredRoot.path,
           freeSpace: preferredRoot.freeSpace,
-          totalSpace: preferredRoot.totalSpace,
+          totalSpace: Number.isFinite(preferredRoot.totalSpace)
+            ? preferredRoot.totalSpace
+            : null,
         };
       }
     } catch (error) {

@@ -7451,6 +7451,7 @@ paths:
                         type: number
                       totalSpace:
                         type: number
+                        nullable: true
   /service/radarr:
     get:
       summary: Get non-sensitive Radarr server list

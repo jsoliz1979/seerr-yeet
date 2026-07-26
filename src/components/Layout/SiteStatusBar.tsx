@@ -8,7 +8,7 @@ interface SiteStatus {
   storage: {
     path: string;
     freeSpace: number;
-    totalSpace: number;
+    totalSpace: number | null;
   } | null;
 }
 
@@ -68,18 +68,20 @@ const SiteStatusBar = () => {
                 })}
               </span>
             </div>
-            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-gray-700">
-              <div
-                className={`h-full rounded-full ${
-                  usedPercent >= 90
-                    ? 'bg-red-500'
-                    : usedPercent >= 75
-                      ? 'bg-amber-400'
-                      : 'bg-gradient-to-r from-cyan-400 to-purple-500'
-                }`}
-                style={{ width: `${usedPercent}%` }}
-              />
-            </div>
+            {data.storage.totalSpace && (
+              <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-gray-700">
+                <div
+                  className={`h-full rounded-full ${
+                    usedPercent >= 90
+                      ? 'bg-red-500'
+                      : usedPercent >= 75
+                        ? 'bg-amber-400'
+                        : 'bg-gradient-to-r from-cyan-400 to-purple-500'
+                  }`}
+                  style={{ width: `${usedPercent}%` }}
+                />
+              </div>
+            )}
           </div>
         </div>
       )}
