@@ -52,10 +52,10 @@ const SiteStatusBar = () => {
   const driveLabel = data.storage?.path.match(/^([a-zA-Z]:)/)?.[1];
 
   return (
-    <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-cyan-500/20 bg-gray-800/70 px-4 py-2.5 text-sm shadow-lg backdrop-blur">
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-700/70 bg-gray-800/45 px-3 py-2 text-xs shadow-sm backdrop-blur">
       {data.storage && (
-        <div className="flex min-w-0 flex-1 items-center gap-3">
-          <CircleStackIcon className="h-5 w-5 shrink-0 text-cyan-300" />
+        <div className="flex min-w-0 flex-1 items-center gap-2.5">
+          <CircleStackIcon className="h-4 w-4 shrink-0 text-cyan-300" />
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-3">
               <span className="truncate font-medium text-gray-100">
@@ -63,7 +63,7 @@ const SiteStatusBar = () => {
                   drive: driveLabel ? `${driveLabel} ` : '',
                 })}
               </span>
-              <span className="shrink-0 font-semibold text-cyan-200">
+              <span className="shrink-0 font-medium text-cyan-200">
                 {data.storage.totalSpace
                   ? intl.formatMessage(messages.freeOfTotal, {
                       free: formatBytes(data.storage.freeSpace),
@@ -75,7 +75,7 @@ const SiteStatusBar = () => {
               </span>
             </div>
             {data.storage.totalSpace && (
-              <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-gray-700">
+              <div className="mt-1 h-1 overflow-hidden rounded-full bg-gray-700">
                 <div
                   className={`h-full rounded-full ${
                     usedPercent >= 90
@@ -91,12 +91,12 @@ const SiteStatusBar = () => {
           </div>
         </div>
       )}
-      <div className="flex shrink-0 items-center gap-2 rounded-full bg-gray-900/70 px-3 py-1.5 font-medium text-gray-100">
-        <span className="relative flex h-2.5 w-2.5">
+      <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-gray-900/60 px-2.5 py-1 font-medium text-gray-200">
+        <span className="relative flex h-2 w-2">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-60" />
-          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-400" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-green-400" />
         </span>
-        <UsersIcon className="h-4 w-4 text-green-300" />
+        <UsersIcon className="h-3.5 w-3.5 text-green-300" />
         {intl.formatMessage(messages.online, { count: data.onlineUsers })}
       </div>
     </div>

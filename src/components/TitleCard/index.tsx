@@ -43,6 +43,8 @@ interface TitleCardProps {
   inProgress?: boolean;
   isAddedToWatchlist?: number | boolean;
   mutateParent?: () => void;
+  showMediaTypeBadge?: boolean;
+  showStaticMetadata?: boolean;
 }
 
 const messages = defineMessages('components.TitleCard', {
@@ -67,6 +69,8 @@ const TitleCard = ({
   inProgress = false,
   canExpand = false,
   mutateParent,
+  showMediaTypeBadge = true,
+  showStaticMetadata = false,
 }: TitleCardProps) => {
   const isTouch = useIsTouch();
   const intl = useIntl();
@@ -386,21 +390,23 @@ const TitleCard = ({
             fill
           />
           <div className="absolute left-0 right-0 flex items-center justify-between p-2">
-            <div
-              className={`pointer-events-none z-40 self-start rounded-full border shadow-md ${
-                mediaType === 'movie' || mediaType === 'collection'
-                  ? 'border-blue-500 bg-blue-600/80'
-                  : 'border-purple-600 bg-purple-600/80'
-              }`}
-            >
-              <div className="flex h-4 items-center px-2 py-2 text-center text-xs font-medium uppercase tracking-wider text-white sm:h-5">
-                {mediaType === 'movie'
-                  ? intl.formatMessage(globalMessages.movie)
-                  : mediaType === 'collection'
-                    ? intl.formatMessage(globalMessages.collection)
-                    : intl.formatMessage(globalMessages.tvshow)}
+            {showMediaTypeBadge && (
+              <div
+                className={`pointer-events-none z-40 self-start rounded-full border shadow-md ${
+                  mediaType === 'movie' || mediaType === 'collection'
+                    ? 'border-blue-500 bg-blue-600/80'
+                    : 'border-purple-600 bg-purple-600/80'
+                }`}
+              >
+                <div className="flex h-4 items-center px-2 py-2 text-center text-xs font-medium uppercase tracking-wider text-white sm:h-5">
+                  {mediaType === 'movie'
+                    ? intl.formatMessage(globalMessages.movie)
+                    : mediaType === 'collection'
+                      ? intl.formatMessage(globalMessages.collection)
+                      : intl.formatMessage(globalMessages.tvshow)}
+                </div>
               </div>
-            </div>
+            )}
             {showDetail && currentStatus !== MediaStatus.BLOCKLISTED && (
               <div className="flex flex-col gap-1">
                 {user?.userType !== UserType.PLEX &&
@@ -579,6 +585,23 @@ const TitleCard = ({
           </Transition>
         </div>
       </div>
+      {showStaticMetadata && (
+        <div className="px-1 pb-1 pt-2">
+          <Link
+            href={
+              mediaType === 'movie'
+                ? `/movie/${id}`
+                : mediaType === 'collection'
+                  ? `/collection/${id}`
+                  : `/tv/${id}`
+            }
+            className="line-clamp-2 block min-h-10 text-sm font-semibold leading-5 text-gray-100 transition hover:text-purple-300"
+          >
+            {title}
+          </Link>
+          <div className="mt-0.5 text-xs text-gray-400">{year || '-'}</div>
+        </div>
+      )}
     </div>
   );
 };

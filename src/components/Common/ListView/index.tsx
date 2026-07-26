@@ -22,6 +22,9 @@ type ListViewProps = {
   isReachingEnd?: boolean;
   onScrollBottom: () => void;
   mutateParent?: () => void;
+  className?: string;
+  showMediaTypeBadge?: boolean;
+  showStaticMetadata?: boolean;
 };
 
 const ListView = ({
@@ -32,6 +35,9 @@ const ListView = ({
   isReachingEnd,
   plexItems,
   mutateParent,
+  className,
+  showMediaTypeBadge,
+  showStaticMetadata,
 }: ListViewProps) => {
   const intl = useIntl();
   const { hasPermission } = useUser();
@@ -49,7 +55,7 @@ const ListView = ({
           {intl.formatMessage(globalMessages.noresults)}
         </div>
       )}
-      <ul className="cards-vertical">
+      <ul className={className ?? 'cards-vertical'}>
         {plexItems?.map((title, index) => {
           return (
             <li key={`${title.ratingKey}-${index}`}>
@@ -96,6 +102,8 @@ const ListView = ({
                       (title.mediaInfo?.downloadStatus ?? []).length > 0
                     }
                     canExpand
+                    showMediaTypeBadge={showMediaTypeBadge}
+                    showStaticMetadata={showStaticMetadata}
                   />
                 );
                 break;
