@@ -58,8 +58,10 @@ const MobileMenu = ({
   revalidateRequestsCount,
 }: MobileMenuProps) => {
   const ref = useRef<HTMLDivElement>(null);
+  const lastScrollY = useRef(0);
   const intl = useIntl();
   const [isOpen, setIsOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const { hasPermission } = useUser();
   const router = useRouter();
   useClickOutside(ref, () => {
@@ -183,8 +185,34 @@ const MobileMenu = ({
     openIssuesCount,
   ]);
 
+  useEffect(() => {
+    const updateVisibility = () => {
+      const currentScrollY = Math.max(0, window.scrollY);
+      const difference = currentScrollY - lastScrollY.current;
+
+      if (isOpen || currentScrollY < 80) {
+        setIsVisible(true);
+      } else if (difference > 8) {
+        setIsVisible(false);
+      } else if (difference < -8) {
+        setIsVisible(true);
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    lastScrollY.current = Math.max(0, window.scrollY);
+    window.addEventListener('scroll', updateVisibility, { passive: true });
+
+    return () => window.removeEventListener('scroll', updateVisibility);
+  }, [isOpen]);
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50">
+    <div
+      className={`fixed bottom-0 left-0 right-0 z-50 transform-gpu transition-transform duration-300 ease-out ${
+        isVisible || isOpen ? 'translate-y-0' : 'translate-y-full'
+      }`}
+    >
       <Transition
         show={isOpen}
         as="div"
