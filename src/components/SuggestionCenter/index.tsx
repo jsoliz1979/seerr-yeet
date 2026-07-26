@@ -19,18 +19,18 @@ import useSWR from 'swr';
 const messages = defineMessages('components.SuggestionCenter', {
   title: 'Suggestions',
   subtitle:
-    'Have an idea or notice something confusing? Send it directly to the Seerr administrators.',
+    'Help shape this site! Share your ideas for a better layout, useful new features, or anything that is confusing or broken.',
   category: 'What is this about?',
   suggestion: 'Suggestion',
   problem: 'Something is confusing or broken',
   other: 'Other',
-  details: 'Tell us what you would like to see',
+  details: 'How can we make this site better?',
   placeholder:
-    'Describe your idea or problem. The more detail you include, the easier it is for us to help.',
+    'Tell us what you would change, add, or improve. You can also report something that looks confusing or does not work correctly. The more detail you include, the better!',
   page: 'Page or screen (optional)',
   pagePlaceholder: 'Example: Movies page or Request Movie window',
   submit: 'Send Suggestion',
-  sent: 'Thank you! Your suggestion was sent to the administrators.',
+  sent: 'Thank you for helping improve the site! Your idea was sent.',
   sendFailed: 'Something went wrong while sending your suggestion.',
   adminInbox: 'Administrator Inbox',
   adminSubtitle: 'Suggestions submitted by Seerr users are stored here.',
