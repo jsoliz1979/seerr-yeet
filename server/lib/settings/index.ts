@@ -408,7 +408,7 @@ class Settings {
       vapidPublic: '',
       main: {
         apiKey: '',
-        applicationTitle: 'Seerr',
+        applicationTitle: '}{maGe',
         applicationUrl: '',
         cacheImages: false,
         defaultPermissions: Permission.REQUEST,
