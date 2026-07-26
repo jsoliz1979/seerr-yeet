@@ -9,8 +9,13 @@ import UserWarnings from '@app/components/Layout/UserWarnings';
 import useLocale from '@app/hooks/useLocale';
 import useSettings from '@app/hooks/useSettings';
 import { useUser } from '@app/hooks/useUser';
-import { ArrowLeftIcon, Bars3BottomLeftIcon } from '@heroicons/react/24/solid';
+import {
+  ArrowLeftIcon,
+  Bars3BottomLeftIcon,
+  LightBulbIcon,
+} from '@heroicons/react/24/solid';
 import type { AvailableLocale } from '@server/types/languages';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import useSWR from 'swr';
@@ -130,6 +135,21 @@ const Layout = ({ children }: LayoutProps) => {
           <div className="mb-6">
             <div className="max-w-8xl mx-auto px-4">
               <SiteStatusBar />
+              {!router.pathname.match(/^\/suggestions/) && (
+                <div className="-mt-1 mb-5 flex justify-end sm:hidden">
+                  <Link
+                    href="/suggestions"
+                    className="flex animate-pulse items-center gap-2 rounded-full border border-pink-300/70 bg-gradient-to-r from-purple-600 to-pink-500 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-pink-500/25"
+                    aria-label="Share an idea to improve this site"
+                  >
+                    <LightBulbIcon className="h-5 w-5" />
+                    <span>Share an Idea</span>
+                    <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-[9px] tracking-wide">
+                      NEW
+                    </span>
+                  </Link>
+                </div>
+              )}
               <UserWarnings />
               {children}
             </div>

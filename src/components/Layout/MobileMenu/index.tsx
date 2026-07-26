@@ -185,19 +185,6 @@ const MobileMenu = ({
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50">
-      {!router.pathname.match(/^\/suggestions/) && !isOpen && (
-        <Link
-          href="/suggestions"
-          className="absolute bottom-[calc(100%+0.75rem)] right-4 flex animate-pulse items-center gap-2 rounded-full border border-pink-300/70 bg-gradient-to-r from-purple-600 to-pink-500 px-4 py-2.5 text-sm font-bold text-white shadow-xl shadow-pink-500/30"
-          aria-label="Share an idea to improve this site"
-        >
-          <FilledLightBulbIcon className="h-5 w-5" />
-          <span>Share an Idea</span>
-          <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-[9px] tracking-wide">
-            NEW
-          </span>
-        </Link>
-      )}
       <Transition
         show={isOpen}
         as="div"
