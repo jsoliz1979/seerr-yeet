@@ -13,9 +13,9 @@ interface SiteStatus {
 }
 
 const messages = defineMessages('components.Layout.SiteStatusBar', {
-  movieStorage: '{drive}movie storage',
-  free: '{free} free',
-  freeOfTotal: '{free} free of {total}',
+  movieStorage: 'Movie storage',
+  available: '{space} available',
+  usedOfTotal: '{used} used of {total}',
   online: '{count, plural, one {# user online} other {# users online}}',
 });
 
@@ -49,28 +49,28 @@ const SiteStatusBar = () => {
         )
       )
     : 0;
-  const driveLabel = data.storage?.path.match(/^([a-zA-Z]:)/)?.[1];
+  const usedSpace = data.storage?.totalSpace
+    ? Math.max(0, data.storage.totalSpace - data.storage.freeSpace)
+    : null;
 
   return (
     <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-700/70 bg-gray-800/45 px-3 py-2 text-xs shadow-sm backdrop-blur">
       {data.storage && (
-        <div className="flex min-w-0 flex-1 items-center gap-2.5">
+        <div className="flex w-full min-w-0 items-center gap-2.5 sm:flex-1">
           <CircleStackIcon className="h-4 w-4 shrink-0 text-cyan-300" />
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-3">
               <span className="truncate font-medium text-gray-100">
-                {intl.formatMessage(messages.movieStorage, {
-                  drive: driveLabel ? `${driveLabel} ` : '',
-                })}
+                {intl.formatMessage(messages.movieStorage)}
               </span>
               <span className="shrink-0 font-medium text-cyan-200">
-                {data.storage.totalSpace
-                  ? intl.formatMessage(messages.freeOfTotal, {
-                      free: formatBytes(data.storage.freeSpace),
+                {data.storage.totalSpace && usedSpace !== null
+                  ? intl.formatMessage(messages.usedOfTotal, {
+                      used: formatBytes(usedSpace),
                       total: formatBytes(data.storage.totalSpace),
                     })
-                  : intl.formatMessage(messages.free, {
-                      free: formatBytes(data.storage.freeSpace),
+                  : intl.formatMessage(messages.available, {
+                      space: formatBytes(data.storage.freeSpace),
                     })}
               </span>
             </div>
