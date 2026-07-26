@@ -5,8 +5,10 @@ import PageTitle from '@app/components/Common/PageTitle';
 import Tooltip from '@app/components/Common/Tooltip';
 import CreateSlider from '@app/components/Discover/CreateSlider';
 import DiscoverSliderEdit from '@app/components/Discover/DiscoverSliderEdit';
+import MediaDashboard from '@app/components/Discover/MediaDashboard';
 import MovieGenreSlider from '@app/components/Discover/MovieGenreSlider';
 import NetworkSlider from '@app/components/Discover/NetworkSlider';
+import PlexLibraryRows from '@app/components/Discover/PlexLibraryRows';
 import PlexWatchlistSlider from '@app/components/Discover/PlexWatchlistSlider';
 import RecentRequestsSlider from '@app/components/Discover/RecentRequestsSlider';
 import RecentlyAddedSlider from '@app/components/Discover/RecentlyAddedSlider';
@@ -54,7 +56,7 @@ const messages = defineMessages('components.Discover', {
 
 const Discover = () => {
   const intl = useIntl();
-  const { hasPermission } = useUser();
+  const { hasPermission, user } = useUser();
   const { addToast } = useToasts();
   const {
     data: discoverData,
@@ -123,6 +125,8 @@ const Discover = () => {
   return (
     <>
       <PageTitle title={intl.formatMessage(messages.discover)} />
+      {!isEditing && <MediaDashboard user={user} />}
+      {!isEditing && <PlexLibraryRows />}
       {hasPermission(Permission.ADMIN) && (
         <>
           {isEditing && (

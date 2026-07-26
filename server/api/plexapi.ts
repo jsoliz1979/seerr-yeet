@@ -91,6 +91,43 @@ interface PlexMetadataResponse {
   };
 }
 
+interface PlexSessionsResponse {
+  MediaContainer: {
+    size?: number;
+    Metadata?: {
+      ratingKey?: string;
+      type?: string;
+      title?: string;
+      grandparentTitle?: string;
+      parentTitle?: string;
+      thumb?: string;
+      duration?: number;
+      viewOffset?: number;
+      User?: { title?: string }[];
+      Player?: { title?: string; state?: string; local?: boolean }[];
+      Session?: { id?: string; bandwidth?: number }[];
+      TranscodeSession?: {
+        progress?: number;
+        speed?: number;
+        videoDecision?: string;
+        audioDecision?: string;
+      }[];
+    }[];
+  };
+}
+
+export interface PlexSession {
+  id: string;
+  user: string;
+  player: string;
+  state: string;
+  title: string;
+  subtitle?: string;
+  type: string;
+  progress: number;
+  playback: 'Direct Play' | 'Direct Stream' | 'Transcoding';
+}
+
 class PlexAPI extends ExternalAPI {
   constructor({
     plexToken,
@@ -131,6 +168,47 @@ class PlexAPI extends ExternalAPI {
     const response = await this.get<PlexLibrariesResponse>('/library/sections');
 
     return response.MediaContainer.Directory;
+  }
+
+  public async getSessions(): Promise<PlexSession[]> {
+    const response = await this.get<PlexSessionsResponse>('/status/sessions');
+
+    return (response.MediaContainer.Metadata ?? []).map((session, index) => {
+      const transcode = session.TranscodeSession?.[0];
+      const videoDecision = transcode?.videoDecision?.toLowerCase();
+      const audioDecision = transcode?.audioDecision?.toLowerCase();
+      const playback =
+        videoDecision === 'transcode' || audioDecision === 'transcode'
+          ? 'Transcoding'
+          : videoDecision === 'copy' || audioDecision === 'copy'
+            ? 'Direct Stream'
+            : 'Direct Play';
+      const progress =
+        transcode?.progress ??
+        (session.duration && session.viewOffset
+          ? (session.viewOffset / session.duration) * 100
+          : 0);
+
+      return {
+        id:
+          session.Session?.[0]?.id ??
+          session.ratingKey ??
+          `plex-session-${index}`,
+        user: session.User?.[0]?.title ?? 'Unknown user',
+        player: session.Player?.[0]?.title ?? 'Plex',
+        state: session.Player?.[0]?.state ?? 'playing',
+        title: session.title ?? 'Unknown title',
+        subtitle:
+          session.type === 'episode'
+            ? [session.grandparentTitle, session.parentTitle]
+                .filter(Boolean)
+                .join(' • ')
+            : undefined,
+        type: session.type ?? 'video',
+        progress: Math.min(100, Math.max(0, progress)),
+        playback,
+      };
+    });
   }
 
   public async syncLibraries(): Promise<void> {

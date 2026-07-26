@@ -1,16 +1,119 @@
+import PlexAPI from '@server/api/plexapi';
 import RadarrAPI from '@server/api/servarr/radarr';
 import SonarrAPI from '@server/api/servarr/sonarr';
 import TheMovieDb from '@server/api/themoviedb';
+import { getRepository } from '@server/datasource';
+import { User } from '@server/entity/User';
 import type {
   ServiceCommonServer,
   ServiceCommonServerWithDetails,
 } from '@server/interfaces/api/serviceInterfaces';
 import { getOnlineUserCount } from '@server/lib/onlineUsers';
+import { Permission } from '@server/lib/permissions';
 import { getSettings } from '@server/lib/settings';
 import logger from '@server/logger';
+import { isAuthenticated } from '@server/middleware/auth';
 import { Router } from 'express';
 
 const serviceRoutes = Router();
+
+serviceRoutes.get(
+  '/plex/sessions',
+  isAuthenticated(Permission.ADMIN),
+  async (_req, res) => {
+    const owner = await getRepository(User).findOne({
+      where: { id: 1 },
+      select: { id: true, plexToken: true },
+    });
+
+    if (!owner?.plexToken) {
+      return res.json({ sessions: [], connected: false });
+    }
+
+    try {
+      const plex = new PlexAPI({ plexToken: owner.plexToken, timeout: 10000 });
+      return res.json({ sessions: await plex.getSessions(), connected: true });
+    } catch (error) {
+      logger.debug('Unable to retrieve active Plex sessions.', {
+        label: 'Plex API',
+        errorMessage: error.message,
+      });
+      return res.json({ sessions: [], connected: false });
+    }
+  }
+);
+
+serviceRoutes.get('/plex/recent-libraries', async (_req, res) => {
+  const settings = getSettings();
+  const owner = await getRepository(User).findOne({
+    where: { id: 1 },
+    select: { id: true, plexToken: true },
+  });
+
+  if (!owner?.plexToken) {
+    return res.json({ libraries: [] });
+  }
+
+  const movieLibraries = settings.plex.libraries.filter(
+    (library) =>
+      library.enabled &&
+      library.type === 'movie' &&
+      /(new|old)\s*movies?/i.test(library.name)
+  );
+
+  try {
+    const plex = new PlexAPI({ plexToken: owner.plexToken, timeout: 10000 });
+    const libraries = await Promise.all(
+      movieLibraries.map(async (library) => {
+        const items = await plex.getRecentlyAdded(
+          library.id,
+          { addedAt: Date.now() - 1000 * 60 * 60 * 24 * 90 },
+          'movie'
+        );
+
+        return {
+          id: library.id,
+          name: library.name,
+          items: items
+            .map((item) => {
+              const tmdbGuid = item.Guid?.find((guid) =>
+                guid.id.startsWith('tmdb://')
+              )?.id;
+              const tmdbId = tmdbGuid
+                ? Number(tmdbGuid.replace('tmdb://', ''))
+                : null;
+
+              return tmdbId && Number.isFinite(tmdbId)
+                ? {
+                    tmdbId,
+                    ratingKey: item.ratingKey,
+                    addedAt: item.addedAt,
+                  }
+                : null;
+            })
+            .filter(
+              (
+                item
+              ): item is {
+                tmdbId: number;
+                ratingKey: string;
+                addedAt: number;
+              } => Boolean(item)
+            )
+            .slice(0, 20),
+        };
+      })
+    );
+
+    return res.json({ libraries });
+  } catch (error) {
+    logger.debug('Unable to retrieve recent Plex library additions.', {
+      label: 'Plex API',
+      errorMessage: error.message,
+    });
+    return res.json({ libraries: [] });
+  }
+});
 
 serviceRoutes.get('/status', async (_req, res) => {
   const settings = getSettings();
