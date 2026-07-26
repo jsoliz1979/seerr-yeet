@@ -43,6 +43,13 @@ export interface RootFolder {
   }[];
 }
 
+export interface DiskSpace {
+  path: string;
+  label?: string;
+  freeSpace: number;
+  totalSpace: number;
+}
+
 export interface QualityProfile {
   id: number;
   name: string;
@@ -158,6 +165,21 @@ class ServarrBase<QueueItemAppendT> extends ExternalAPI {
     } catch (e) {
       throw new Error(
         `[${this.apiName}] Failed to retrieve root folders: ${e.message}`,
+        { cause: e }
+      );
+    }
+  };
+
+  public getDiskSpace = async (cacheSeconds = 60): Promise<DiskSpace[]> => {
+    try {
+      return await this.getRolling<DiskSpace[]>(
+        `/diskspace`,
+        undefined,
+        cacheSeconds
+      );
+    } catch (e) {
+      throw new Error(
+        `[${this.apiName}] Failed to retrieve disk space: ${e.message}`,
         { cause: e }
       );
     }

@@ -15,6 +15,7 @@ interface SiteStatus {
 const messages = defineMessages('components.Layout.SiteStatusBar', {
   movieStorage: '{drive}movie storage',
   free: '{free} free',
+  freeOfTotal: '{free} free of {total}',
   online: '{count, plural, one {# user online} other {# users online}}',
 });
 
@@ -63,9 +64,14 @@ const SiteStatusBar = () => {
                 })}
               </span>
               <span className="shrink-0 font-semibold text-cyan-200">
-                {intl.formatMessage(messages.free, {
-                  free: formatBytes(data.storage.freeSpace),
-                })}
+                {data.storage.totalSpace
+                  ? intl.formatMessage(messages.freeOfTotal, {
+                      free: formatBytes(data.storage.freeSpace),
+                      total: formatBytes(data.storage.totalSpace),
+                    })
+                  : intl.formatMessage(messages.free, {
+                      free: formatBytes(data.storage.freeSpace),
+                    })}
               </span>
             </div>
             {data.storage.totalSpace && (

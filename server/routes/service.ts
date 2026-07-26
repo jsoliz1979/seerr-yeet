@@ -42,12 +42,32 @@ serviceRoutes.get('/status', async (_req, res) => {
         rootFolders[0];
 
       if (preferredRoot && Number.isFinite(preferredRoot.freeSpace)) {
+        let totalSpace: number | null = null;
+        try {
+          const diskSpaces = await radarr.getDiskSpace(60);
+          const drive = preferredRoot.path.match(/^([a-zA-Z]:)/)?.[1];
+          const matchingDisk =
+            diskSpaces.find(
+              (disk) =>
+                drive &&
+                (disk.path?.toLowerCase().startsWith(drive.toLowerCase()) ||
+                  disk.label?.toLowerCase().startsWith(drive.toLowerCase()))
+            ) ?? diskSpaces[0];
+
+          if (matchingDisk && Number.isFinite(matchingDisk.totalSpace)) {
+            totalSpace = matchingDisk.totalSpace;
+          }
+        } catch (error) {
+          logger.debug('Unable to retrieve total disk capacity from Radarr.', {
+            label: 'API',
+            errorMessage: error.message,
+          });
+        }
+
         storage = {
           path: preferredRoot.path,
           freeSpace: preferredRoot.freeSpace,
-          totalSpace: Number.isFinite(preferredRoot.totalSpace)
-            ? preferredRoot.totalSpace
-            : null,
+          totalSpace,
         };
       }
     } catch (error) {
