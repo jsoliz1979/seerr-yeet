@@ -126,6 +126,8 @@ const ListView = ({
                       (title.mediaInfo?.downloadStatus ?? []).length > 0
                     }
                     canExpand
+                    showMediaTypeBadge={showMediaTypeBadge}
+                    showStaticMetadata={showStaticMetadata}
                   />
                 );
                 break;
