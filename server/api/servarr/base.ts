@@ -144,12 +144,14 @@ class ServarrBase<QueueItemAppendT> extends ExternalAPI {
     }
   };
 
-  public getRootFolders = async (): Promise<RootFolder[]> => {
+  public getRootFolders = async (
+    cacheSeconds = 3600
+  ): Promise<RootFolder[]> => {
     try {
       const data = await this.getRolling<RootFolder[]>(
         `/rootfolder`,
         undefined,
-        3600
+        cacheSeconds
       );
 
       return data;

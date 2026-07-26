@@ -21,7 +21,7 @@ const BrandLogo = ({ variant = 'full', className = '' }: BrandLogoProps) => (
         alt=""
         fill
         sizes={variant === 'stacked' ? '112px' : '64px'}
-        className="object-contain"
+        className="rounded-[20%] object-contain drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]"
         priority
       />
     </div>

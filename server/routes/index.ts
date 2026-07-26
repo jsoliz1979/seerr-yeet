@@ -8,6 +8,7 @@ import type {
 import { getRepository } from '@server/datasource';
 import DiscoverSlider from '@server/entity/DiscoverSlider';
 import type { StatusResponse } from '@server/interfaces/api/settingsInterfaces';
+import { recordUserActivity } from '@server/lib/onlineUsers';
 import { Permission } from '@server/lib/permissions';
 import { getSettings } from '@server/lib/settings';
 import logger from '@server/logger';
@@ -47,6 +48,12 @@ import user from './user';
 const router = Router();
 
 router.use(checkUser);
+router.use((req, _res, next) => {
+  if (req.user) {
+    recordUserActivity(req.user.id);
+  }
+  next();
+});
 
 router.get<unknown, StatusResponse>('/status', async (req, res) => {
   const githubApi = new GithubAPI();

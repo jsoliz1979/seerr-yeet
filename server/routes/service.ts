@@ -5,11 +5,66 @@ import type {
   ServiceCommonServer,
   ServiceCommonServerWithDetails,
 } from '@server/interfaces/api/serviceInterfaces';
+import { getOnlineUserCount } from '@server/lib/onlineUsers';
 import { getSettings } from '@server/lib/settings';
 import logger from '@server/logger';
 import { Router } from 'express';
 
 const serviceRoutes = Router();
+
+serviceRoutes.get('/status', async (_req, res) => {
+  const settings = getSettings();
+  const radarrSettings =
+    settings.radarr.find((server) => server.isDefault && !server.is4k) ??
+    settings.radarr.find((server) => !server.is4k) ??
+    settings.radarr[0];
+
+  let storage: {
+    path: string;
+    freeSpace: number;
+    totalSpace: number;
+  } | null = null;
+
+  if (radarrSettings) {
+    try {
+      const radarr = new RadarrAPI({
+        apiKey: radarrSettings.apiKey,
+        url: RadarrAPI.buildUrl(radarrSettings, '/api/v3'),
+      });
+      const rootFolders = await radarr.getRootFolders(60);
+      const preferredRoot =
+        rootFolders.find((root) => /^[oO]:[\\/]/.test(root.path)) ??
+        rootFolders.find(
+          (root) =>
+            root.path.toLowerCase() ===
+            radarrSettings.activeDirectory.toLowerCase()
+        ) ??
+        rootFolders[0];
+
+      if (
+        preferredRoot &&
+        Number.isFinite(preferredRoot.freeSpace) &&
+        Number.isFinite(preferredRoot.totalSpace)
+      ) {
+        storage = {
+          path: preferredRoot.path,
+          freeSpace: preferredRoot.freeSpace,
+          totalSpace: preferredRoot.totalSpace,
+        };
+      }
+    } catch (error) {
+      logger.debug('Unable to retrieve movie storage status from Radarr.', {
+        label: 'API',
+        errorMessage: error.message,
+      });
+    }
+  }
+
+  return res.json({
+    onlineUsers: getOnlineUserCount(),
+    storage,
+  });
+});
 
 serviceRoutes.get('/radarr', async (req, res) => {
   const settings = getSettings();

@@ -7425,6 +7425,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Collection'
+  /service/status:
+    get:
+      summary: Get live site and movie-storage status
+      description: Returns recently active users and free space reported by Radarr.
+      tags:
+        - service
+      responses:
+        '200':
+          description: Live site status returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  onlineUsers:
+                    type: number
+                  storage:
+                    nullable: true
+                    type: object
+                    properties:
+                      path:
+                        type: string
+                      freeSpace:
+                        type: number
+                      totalSpace:
+                        type: number
   /service/radarr:
     get:
       summary: Get non-sensitive Radarr server list

@@ -3,6 +3,7 @@ import MobileMenu from '@app/components/Layout/MobileMenu';
 import PullToRefresh from '@app/components/Layout/PullToRefresh';
 import SearchInput from '@app/components/Layout/SearchInput';
 import Sidebar from '@app/components/Layout/Sidebar';
+import SiteStatusBar from '@app/components/Layout/SiteStatusBar';
 import UserDropdown from '@app/components/Layout/UserDropdown';
 import UserWarnings from '@app/components/Layout/UserWarnings';
 import useLocale from '@app/hooks/useLocale';
@@ -128,6 +129,7 @@ const Layout = ({ children }: LayoutProps) => {
         <main className="relative top-16 z-0 focus:outline-none" tabIndex={0}>
           <div className="mb-6">
             <div className="max-w-8xl mx-auto px-4">
+              <SiteStatusBar />
               <UserWarnings />
               {children}
             </div>
