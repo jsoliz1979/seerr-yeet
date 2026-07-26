@@ -96,10 +96,11 @@ const MediaDashboard = ({ user }: { user?: User }) => {
   const { data: requests } = useSWR<RequestResultsResponse>(
     '/api/v1/request?filter=all&take=3&sort=added&skip=0'
   );
-  const { data: plexSessions } = useSWR<PlexSessionsResponse>(
-    isOwner ? '/api/v1/service/plex/sessions' : null,
-    { refreshInterval: 15000 }
-  );
+  const { data: plexSessions, error: plexSessionsError } =
+    useSWR<PlexSessionsResponse>(
+      isOwner ? '/api/v1/service/plex/sessions' : null,
+      { refreshInterval: 15000, errorRetryCount: 2 }
+    );
 
   return (
     <section className="mb-8">
@@ -213,7 +214,7 @@ const MediaDashboard = ({ user }: { user?: User }) => {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="truncate text-sm font-semibold text-white">
-                        {session.user} · {session.title}
+                        {session.user} - {session.title}
                       </div>
                       <div className="truncate text-xs text-gray-400">
                         {session.subtitle || session.player}
@@ -244,8 +245,16 @@ const MediaDashboard = ({ user }: { user?: User }) => {
                     : 'Plex activity is temporarily unavailable.'}
                 </div>
               )}
-              {!plexSessions && (
-                <div className="h-[4.5rem] animate-pulse rounded-lg bg-gray-700/60" />
+              {!plexSessions && !plexSessionsError && (
+                <div className="rounded-lg border border-gray-700/80 bg-gray-900/40 p-5 text-center text-sm text-gray-400">
+                  Checking Plex activity…
+                </div>
+              )}
+              {plexSessionsError && (
+                <div className="rounded-lg border border-red-500/25 bg-red-500/5 p-5 text-center text-sm text-red-200">
+                  Plex activity could not be loaded. The dashboard will retry
+                  automatically.
+                </div>
               )}
             </div>
           </div>

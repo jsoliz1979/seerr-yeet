@@ -103,15 +103,26 @@ interface PlexSessionsResponse {
       thumb?: string;
       duration?: number;
       viewOffset?: number;
-      User?: { title?: string }[];
-      Player?: { title?: string; state?: string; local?: boolean }[];
-      Session?: { id?: string; bandwidth?: number }[];
-      TranscodeSession?: {
-        progress?: number;
-        speed?: number;
-        videoDecision?: string;
-        audioDecision?: string;
-      }[];
+      User?: { title?: string } | { title?: string }[];
+      Player?:
+        | { title?: string; state?: string; local?: boolean }
+        | { title?: string; state?: string; local?: boolean }[];
+      Session?:
+        | { id?: string; bandwidth?: number }
+        | { id?: string; bandwidth?: number }[];
+      TranscodeSession?:
+        | {
+            progress?: number;
+            speed?: number;
+            videoDecision?: string;
+            audioDecision?: string;
+          }
+        | {
+            progress?: number;
+            speed?: number;
+            videoDecision?: string;
+            audioDecision?: string;
+          }[];
     }[];
   };
 }
@@ -127,6 +138,9 @@ export interface PlexSession {
   progress: number;
   playback: 'Direct Play' | 'Direct Stream' | 'Transcoding';
 }
+
+const firstPlexValue = <T>(value?: T | T[]): T | undefined =>
+  Array.isArray(value) ? value[0] : value;
 
 class PlexAPI extends ExternalAPI {
   constructor({
@@ -174,7 +188,10 @@ class PlexAPI extends ExternalAPI {
     const response = await this.get<PlexSessionsResponse>('/status/sessions');
 
     return (response.MediaContainer.Metadata ?? []).map((session, index) => {
-      const transcode = session.TranscodeSession?.[0];
+      const transcode = firstPlexValue(session.TranscodeSession);
+      const user = firstPlexValue(session.User);
+      const player = firstPlexValue(session.Player);
+      const plexSession = firstPlexValue(session.Session);
       const videoDecision = transcode?.videoDecision?.toLowerCase();
       const audioDecision = transcode?.audioDecision?.toLowerCase();
       const playback =
@@ -190,13 +207,10 @@ class PlexAPI extends ExternalAPI {
           : 0);
 
       return {
-        id:
-          session.Session?.[0]?.id ??
-          session.ratingKey ??
-          `plex-session-${index}`,
-        user: session.User?.[0]?.title ?? 'Unknown user',
-        player: session.Player?.[0]?.title ?? 'Plex',
-        state: session.Player?.[0]?.state ?? 'playing',
+        id: plexSession?.id ?? session.ratingKey ?? `plex-session-${index}`,
+        user: user?.title ?? 'Unknown user',
+        player: player?.title ?? 'Plex',
+        state: player?.state ?? 'playing',
         title: session.title ?? 'Unknown title',
         subtitle:
           session.type === 'episode'
@@ -302,7 +316,9 @@ class PlexAPI extends ExternalAPI {
     const response = await this.get<PlexLibraryResponse>(
       `/library/sections/${id}/all?type=${
         mediaType === 'show' ? '4' : '1'
-      }&sort=addedAt%3Adesc&addedAt>>=${Math.floor(options.addedAt / 1000)}`,
+      }&sort=addedAt%3Adesc&includeGuids=1&addedAt>>=${Math.floor(
+        options.addedAt / 1000
+      )}`,
       {
         headers: {
           'X-Plex-Container-Start': '0',

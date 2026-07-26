@@ -16,10 +16,14 @@ interface RecentPlexLibrariesResponse {
 }
 
 const PlexLibraryRows = () => {
-  const { data } = useSWR<RecentPlexLibrariesResponse>(
+  const { data, error } = useSWR<RecentPlexLibrariesResponse>(
     '/api/v1/service/plex/recent-libraries',
-    { revalidateOnMount: true }
+    { revalidateOnMount: true, errorRetryCount: 2 }
   );
+
+  if (error) {
+    return null;
+  }
 
   if (data && data.libraries.every((library) => !library.items.length)) {
     return null;
@@ -27,7 +31,9 @@ const PlexLibraryRows = () => {
 
   if (!data) {
     return (
-      <div className="mb-6 h-72 animate-pulse rounded-xl bg-gray-800/60" />
+      <div className="mb-6 rounded-xl border border-gray-700/70 bg-gray-800/40 px-4 py-3 text-sm text-gray-400">
+        Loading your New Movies and Old Movies libraries…
+      </div>
     );
   }
 
