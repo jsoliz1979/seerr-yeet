@@ -7452,6 +7452,105 @@ paths:
                       totalSpace:
                         type: number
                         nullable: true
+  /service/plex/sessions:
+    get:
+      summary: Get active Plex sessions
+      description: Returns active Plex playback sessions for the owner dashboard.
+      tags:
+        - service
+      responses:
+        '200':
+          description: Plex activity returned
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - sessions
+                  - connected
+                properties:
+                  connected:
+                    type: boolean
+                  sessions:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - id
+                        - user
+                        - player
+                        - state
+                        - title
+                        - type
+                        - progress
+                        - playback
+                      properties:
+                        id:
+                          type: string
+                        user:
+                          type: string
+                        player:
+                          type: string
+                        state:
+                          type: string
+                        title:
+                          type: string
+                        subtitle:
+                          type: string
+                        type:
+                          type: string
+                        progress:
+                          type: number
+                        playback:
+                          type: string
+                          enum:
+                            - Direct Play
+                            - Direct Stream
+                            - Transcoding
+  /service/plex/recent-libraries:
+    get:
+      summary: Get recent additions from Plex movie libraries
+      description: Returns recent Plex additions for the custom media dashboard.
+      tags:
+        - service
+      responses:
+        '200':
+          description: Recent Plex library additions returned
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - libraries
+                properties:
+                  libraries:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - id
+                        - name
+                        - items
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        items:
+                          type: array
+                          items:
+                            type: object
+                            required:
+                              - tmdbId
+                              - ratingKey
+                              - addedAt
+                            properties:
+                              tmdbId:
+                                type: number
+                              ratingKey:
+                                type: string
+                              addedAt:
+                                type: number
   /service/radarr:
     get:
       summary: Get non-sensitive Radarr server list
