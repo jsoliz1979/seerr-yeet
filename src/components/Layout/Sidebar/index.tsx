@@ -10,6 +10,7 @@ import {
   ExclamationTriangleIcon,
   EyeSlashIcon,
   FilmIcon,
+  LightBulbIcon,
   SparklesIcon,
   TvIcon,
   UsersIcon,
@@ -28,6 +29,7 @@ export const menuMessages = defineMessages('components.Layout.Sidebar', {
   requests: 'Requests',
   blocklist: 'Blocklist',
   issues: 'Issues',
+  suggestions: 'Suggestions',
   users: 'Users',
   settings: 'Settings',
 });
@@ -99,6 +101,12 @@ const SidebarLinks: SidebarLinkProps[] = [
       Permission.VIEW_ISSUES,
     ],
     permissionType: 'or',
+  },
+  {
+    href: '/suggestions',
+    messagesKey: 'suggestions',
+    svgIcon: <LightBulbIcon className="mr-3 h-6 w-6" />,
+    activeRegExp: /^\/suggestions/,
   },
   {
     href: '/users',
