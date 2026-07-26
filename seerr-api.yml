@@ -38,6 +38,8 @@ tags:
     description: Endpoints related to getting service (Radarr/Sonarr) details.
   - name: watchlist
     description: Collection of media to watch later
+  - name: suggestion
+    description: User suggestions and administrator review.
   - name: blocklist
     description: Blocklisted media from discovery page.
 servers:
@@ -2063,6 +2065,37 @@ components:
         message:
           type: string
           example: A comment
+    Suggestion:
+      type: object
+      properties:
+        id:
+          type: number
+          example: 1
+        category:
+          type: number
+          enum: [1, 2, 3]
+          example: 1
+        status:
+          type: number
+          enum: [1, 2, 3]
+          example: 1
+        message:
+          type: string
+          example: Add a filter for movies released this year.
+        pageUrl:
+          type: string
+          nullable: true
+          example: Movies page
+        createdBy:
+          $ref: '#/components/schemas/User'
+        modifiedBy:
+          $ref: '#/components/schemas/User'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
     DiscoverSlider:
       type: object
       properties:
@@ -7642,6 +7675,138 @@ paths:
                 type: array
                 items:
                   type: string
+  /suggestion:
+    get:
+      summary: Get submitted suggestions
+      description: Returns suggestions for administrators.
+      tags:
+        - suggestion
+      parameters:
+        - in: query
+          name: take
+          schema:
+            type: number
+            nullable: true
+            example: 50
+        - in: query
+          name: skip
+          schema:
+            type: number
+            nullable: true
+            example: 0
+        - in: query
+          name: status
+          schema:
+            type: number
+            nullable: true
+            enum: [1, 2, 3]
+      responses:
+        '200':
+          description: Suggestions returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pageInfo:
+                    $ref: '#/components/schemas/PageInfo'
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Suggestion'
+    post:
+      summary: Submit a suggestion
+      description: Stores feedback from a signed-in user.
+      tags:
+        - suggestion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                category:
+                  type: number
+                  enum: [1, 2, 3]
+                message:
+                  type: string
+                  minLength: 10
+                  maxLength: 2000
+                pageUrl:
+                  type: string
+                  maxLength: 500
+              required:
+                - category
+                - message
+      responses:
+        '201':
+          description: Suggestion created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Suggestion'
+  /suggestion/count:
+    get:
+      summary: Get suggestion counts
+      description: Returns total and new suggestion counts for administrators.
+      tags:
+        - suggestion
+      responses:
+        '200':
+          description: Suggestion counts returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: number
+                  new:
+                    type: number
+  /suggestion/{suggestionId}:
+    put:
+      summary: Update suggestion status
+      tags:
+        - suggestion
+      parameters:
+        - in: path
+          name: suggestionId
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: number
+                  enum: [1, 2, 3]
+              required:
+                - status
+      responses:
+        '200':
+          description: Suggestion updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Suggestion'
+    delete:
+      summary: Delete a suggestion
+      tags:
+        - suggestion
+      parameters:
+        - in: path
+          name: suggestionId
+          required: true
+          schema:
+            type: number
+      responses:
+        '204':
+          description: Suggestion deleted
   /issue:
     get:
       summary: Get all issues

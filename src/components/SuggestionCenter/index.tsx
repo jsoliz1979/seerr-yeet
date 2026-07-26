@@ -81,8 +81,11 @@ const SuggestionCenter = () => {
       setPageUrl('');
       addToast(intl.formatMessage(messages.sent), { appearance: 'success' });
       await mutate();
-    } catch {
-      addToast(intl.formatMessage(messages.sendFailed), {
+    } catch (error) {
+      const serverMessage =
+        axios.isAxiosError<{ message?: string }>(error) &&
+        error.response?.data.message;
+      addToast(serverMessage || intl.formatMessage(messages.sendFailed), {
         appearance: 'error',
       });
     } finally {
@@ -94,8 +97,11 @@ const SuggestionCenter = () => {
     try {
       await axios.put(`/api/v1/suggestion/${id}`, { status });
       await mutate();
-    } catch {
-      addToast(intl.formatMessage(messages.updateFailed), {
+    } catch (error) {
+      const serverMessage =
+        axios.isAxiosError<{ message?: string }>(error) &&
+        error.response?.data.message;
+      addToast(serverMessage || intl.formatMessage(messages.updateFailed), {
         appearance: 'error',
       });
     }
@@ -106,8 +112,11 @@ const SuggestionCenter = () => {
     try {
       await axios.delete(`/api/v1/suggestion/${id}`);
       await mutate();
-    } catch {
-      addToast(intl.formatMessage(messages.updateFailed), {
+    } catch (error) {
+      const serverMessage =
+        axios.isAxiosError<{ message?: string }>(error) &&
+        error.response?.data.message;
+      addToast(serverMessage || intl.formatMessage(messages.updateFailed), {
         appearance: 'error',
       });
     }
