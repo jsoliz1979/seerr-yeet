@@ -375,6 +375,12 @@ requestRoutes.get('/count', async (_req, res, next) => {
       })
       .getCount();
 
+    const failedCount = await query
+      .where('request.status = :requestStatus', {
+        requestStatus: MediaRequestStatus.FAILED,
+      })
+      .getCount();
+
     const processingCount = await query
       .where('request.status = :requestStatus', {
         requestStatus: MediaRequestStatus.APPROVED,
@@ -412,6 +418,7 @@ requestRoutes.get('/count', async (_req, res, next) => {
       pending: pendingCount,
       approved: approvedCount,
       declined: declinedCount,
+      failed: failedCount,
       processing: processingCount,
       available: availableCount,
       completed: completedCount,

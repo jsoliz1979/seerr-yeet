@@ -6606,6 +6606,8 @@ paths:
                     type: number
                   declined:
                     type: number
+                  failed:
+                    type: number
                   processing:
                     type: number
                   available:

@@ -1,16 +1,21 @@
+import useSettings from '@app/hooks/useSettings';
 import type { User } from '@app/hooks/useUser';
 import { Permission, useUser } from '@app/hooks/useUser';
 import {
   ArrowTopRightOnSquareIcon,
+  BellAlertIcon,
   CheckCircleIcon,
   ClockIcon,
+  ExclamationTriangleIcon,
   FilmIcon,
   LightBulbIcon,
   PlayCircleIcon,
   PlusCircleIcon,
   SignalIcon,
+  SparklesIcon,
 } from '@heroicons/react/24/solid';
-import { MediaRequestStatus } from '@server/constants/media';
+import { MediaRequestStatus, MediaStatus } from '@server/constants/media';
+import type { UserPushSubscription } from '@server/entity/UserPushSubscription';
 import type { RequestResultsResponse } from '@server/interfaces/api/requestInterfaces';
 import Link from 'next/link';
 import useSWR from 'swr';
@@ -29,6 +34,21 @@ interface PlexSession {
 interface PlexSessionsResponse {
   sessions: PlexSession[];
   connected: boolean;
+}
+
+interface RequestCounts {
+  pending: number;
+  processing: number;
+  failed: number;
+  available: number;
+  completed: number;
+}
+
+interface MediaDetails {
+  title?: string;
+  name?: string;
+  releaseDate?: string;
+  firstAirDate?: string;
 }
 
 const getRequestStatus = (status: number) => {
@@ -58,43 +78,145 @@ const getRequestStatus = (status: number) => {
   }
 };
 
+const getTimelineStep = (
+  request: RequestResultsResponse['results'][number]
+) => {
+  const mediaStatus = request.is4k
+    ? request.media?.status4k
+    : request.media?.status;
+
+  if (request.status === MediaRequestStatus.FAILED) return -1;
+  if (request.status === MediaRequestStatus.PENDING) return 0;
+  if (
+    request.status === MediaRequestStatus.COMPLETED ||
+    mediaStatus === MediaStatus.AVAILABLE
+  ) {
+    return 3;
+  }
+  if (
+    mediaStatus === MediaStatus.PROCESSING ||
+    mediaStatus === MediaStatus.PARTIALLY_AVAILABLE
+  ) {
+    return 2;
+  }
+  return 1;
+};
+
 const RequestSummary = ({
   request,
+  ready = false,
 }: {
   request: RequestResultsResponse['results'][number];
+  ready?: boolean;
 }) => {
   const status = getRequestStatus(request.status);
   const mediaType = request.media?.mediaType === 'tv' ? 'Series' : 'Movie';
+  const detailsEndpoint =
+    request.media?.mediaType === 'tv'
+      ? `/api/v1/tv/${request.media.tmdbId}`
+      : `/api/v1/movie/${request.media?.tmdbId}`;
+  const { data: details } = useSWR<MediaDetails>(
+    request.media?.tmdbId ? detailsEndpoint : null
+  );
+  const title =
+    details?.title ?? details?.name ?? `${mediaType} #${request.id}`;
+  const releaseYear = Number(
+    (details?.releaseDate ?? details?.firstAirDate)?.slice(0, 4)
+  );
+  const plexLibrary =
+    request.media?.mediaType === 'tv'
+      ? 'TV Shows'
+      : Number.isFinite(releaseYear) && releaseYear < new Date().getFullYear()
+        ? 'Old Movies'
+        : 'New Movies';
+  const currentStep = getTimelineStep(request);
+  const steps = ['Requested', 'Approved', 'Downloading', 'Available'];
 
   return (
     <Link
-      href="/requests"
-      className="flex items-center gap-3 rounded-lg border border-gray-700/80 bg-gray-900/55 p-3 transition hover:border-purple-500/60 hover:bg-gray-800"
+      href={
+        request.media?.mediaType === 'tv'
+          ? `/tv/${request.media.tmdbId}`
+          : `/movie/${request.media?.tmdbId}`
+      }
+      className={`block rounded-lg border p-3 transition hover:bg-gray-800 ${
+        ready
+          ? 'border-green-500/30 bg-green-950/15 hover:border-green-400/60'
+          : 'border-gray-700/80 bg-gray-900/55 hover:border-purple-500/60'
+      }`}
     >
-      <div className="rounded-lg bg-gray-800 p-2">
-        <FilmIcon className="h-5 w-5 text-purple-300" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-semibold text-gray-100">
-          {mediaType} request #{request.id}
+      <div className="flex items-center gap-3">
+        <div className="rounded-lg bg-gray-800 p-2">
+          {ready ? (
+            <CheckCircleIcon className="h-5 w-5 text-green-300" />
+          ) : (
+            <FilmIcon className="h-5 w-5 text-purple-300" />
+          )}
         </div>
-        <div
-          className={`mt-0.5 flex items-center gap-1 text-xs ${status.color}`}
-        >
-          <status.Icon className="h-3.5 w-3.5" />
-          {status.label}
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-semibold text-gray-100">
+            {title}
+          </div>
+          <div
+            className={`mt-0.5 flex items-center gap-1 text-xs ${status.color}`}
+          >
+            <status.Icon className="h-3.5 w-3.5" />
+            {ready ? `Ready in Plex • ${plexLibrary}` : status.label}
+          </div>
         </div>
+        <ArrowTopRightOnSquareIcon className="h-4 w-4 text-gray-500" />
       </div>
-      <ArrowTopRightOnSquareIcon className="h-4 w-4 text-gray-500" />
+      {!ready && (
+        <div className="mt-3 grid grid-cols-4 gap-1">
+          {steps.map((step, index) => (
+            <div key={step} className="min-w-0">
+              <div
+                className={`mb-1 h-1 rounded-full ${
+                  currentStep === -1
+                    ? 'bg-red-500/60'
+                    : index <= currentStep
+                      ? 'bg-gradient-to-r from-cyan-400 to-purple-500'
+                      : 'bg-gray-700'
+                }`}
+              />
+              <div
+                className={`truncate text-[9px] ${
+                  index <= currentStep ? 'text-gray-300' : 'text-gray-600'
+                }`}
+              >
+                {currentStep === -1 && index === 0 ? 'Failed' : step}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </Link>
   );
 };
 
 const MediaDashboard = ({ user }: { user?: User }) => {
   const { hasPermission } = useUser();
+  const { currentSettings } = useSettings();
   const isOwner = hasPermission(Permission.ADMIN);
   const { data: requests } = useSWR<RequestResultsResponse>(
-    '/api/v1/request?filter=all&take=3&sort=added&skip=0'
+    user
+      ? `/api/v1/request?filter=all&take=3&sort=added&skip=0&requestedBy=${user.id}`
+      : null
+  );
+  const { data: readyRequests } = useSWR<RequestResultsResponse>(
+    user
+      ? `/api/v1/request?filter=available&take=3&sort=modified&skip=0&requestedBy=${user.id}`
+      : null
+  );
+  const { data: pushSubscriptions } = useSWR<UserPushSubscription[]>(
+    user ? `/api/v1/user/${user.id}/pushSubscriptions` : null
+  );
+  const { data: requestCounts } = useSWR<RequestCounts>(
+    isOwner ? '/api/v1/request/count' : null,
+    { refreshInterval: 30000 }
+  );
+  const { data: failedRequests } = useSWR<RequestResultsResponse>(
+    isOwner ? '/api/v1/request?filter=failed&take=3&sort=modified&skip=0' : null
   );
   const { data: plexSessions, error: plexSessionsError } =
     useSWR<PlexSessionsResponse>(
@@ -153,6 +275,69 @@ const MediaDashboard = ({ user }: { user?: User }) => {
           </div>
         </div>
       </div>
+
+      {readyRequests && readyRequests.results.length > 0 && (
+        <div className="mb-4 rounded-xl border border-green-500/25 bg-gradient-to-r from-green-950/25 to-cyan-950/15 p-4 shadow-lg">
+          <div className="mb-3 flex items-center justify-between">
+            <div>
+              <h2 className="flex items-center gap-2 text-lg font-bold text-white">
+                <SparklesIcon className="h-5 w-5 text-green-300" />
+                Recently Ready for You
+              </h2>
+              <p className="text-xs text-gray-400">
+                Your completed requests are ready to watch in Plex
+              </p>
+            </div>
+            <a
+              href="https://app.plex.tv/desktop/"
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm font-medium text-green-300 hover:text-green-200"
+            >
+              Open Plex
+            </a>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            {readyRequests.results.map((request) => (
+              <RequestSummary key={request.id} request={request} ready />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {pushSubscriptions &&
+        pushSubscriptions.length === 0 &&
+        (currentSettings.enablePushRegistration || isOwner) && (
+          <Link
+            href={
+              currentSettings.enablePushRegistration
+                ? '/profile/settings/notifications/webpush'
+                : '/settings/notifications/webpush'
+            }
+            className="mb-4 flex flex-col justify-between gap-3 rounded-xl border border-cyan-400/35 bg-gradient-to-r from-cyan-950/35 via-blue-950/30 to-purple-950/35 p-4 shadow-lg transition hover:border-cyan-300/60 sm:flex-row sm:items-center"
+          >
+            <div className="flex items-start gap-3">
+              <div className="rounded-full bg-cyan-400/15 p-2.5">
+                <BellAlertIcon className="h-6 w-6 text-cyan-300" />
+              </div>
+              <div>
+                <div className="font-bold text-white">
+                  Get notified when your requests are ready
+                </div>
+                <div className="mt-1 text-sm text-gray-300">
+                  {currentSettings.enablePushRegistration
+                    ? 'Turn on free browser notifications for this device.'
+                    : 'Web Push needs to be enabled by the site owner first.'}
+                </div>
+              </div>
+            </div>
+            <span className="self-start rounded-lg bg-cyan-500 px-4 py-2 text-sm font-bold text-gray-950 sm:self-auto">
+              {currentSettings.enablePushRegistration
+                ? 'Set Up Notifications'
+                : 'Enable Web Push'}
+            </span>
+          </Link>
+        )}
 
       <div className={`grid gap-4 ${isOwner ? 'xl:grid-cols-2' : ''}`}>
         <div className="rounded-xl border border-gray-700/80 bg-gray-800/55 p-4 shadow-lg">
@@ -260,6 +445,78 @@ const MediaDashboard = ({ user }: { user?: User }) => {
           </div>
         )}
       </div>
+
+      {isOwner && (
+        <div className="mt-4 rounded-xl border border-amber-500/25 bg-gray-800/55 p-4 shadow-lg">
+          <div className="mb-4 flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+            <div>
+              <h2 className="flex items-center gap-2 text-lg font-bold text-white">
+                <ExclamationTriangleIcon className="h-5 w-5 text-amber-300" />
+                Request Pipeline & Attention
+              </h2>
+              <p className="text-xs text-gray-400">
+                Owner-only overview of requests moving through the system
+              </p>
+            </div>
+            <span className="self-start rounded-full bg-amber-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-200">
+              Owner only
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {[
+              {
+                label: 'Awaiting approval',
+                value: requestCounts?.pending,
+                color: 'text-amber-300',
+              },
+              {
+                label: 'Processing',
+                value: requestCounts?.processing,
+                color: 'text-cyan-300',
+              },
+              {
+                label: 'Failed',
+                value: requestCounts?.failed,
+                color: 'text-red-300',
+              },
+              {
+                label: 'Available',
+                value: requestCounts?.completed,
+                color: 'text-green-300',
+              },
+            ].map((item) => (
+              <Link
+                key={item.label}
+                href="/requests"
+                className="rounded-lg border border-gray-700/80 bg-gray-900/55 p-3 transition hover:border-purple-500/50"
+              >
+                <div className={`text-2xl font-black ${item.color}`}>
+                  {item.value ?? '—'}
+                </div>
+                <div className="mt-1 text-xs text-gray-400">{item.label}</div>
+              </Link>
+            ))}
+          </div>
+
+          <div className="mt-4">
+            <div className="mb-2 text-sm font-semibold text-gray-200">
+              Needs attention
+            </div>
+            {failedRequests && failedRequests.results.length > 0 ? (
+              <div className="grid gap-2 sm:grid-cols-3">
+                {failedRequests.results.map((request) => (
+                  <RequestSummary key={request.id} request={request} />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-lg border border-dashed border-green-500/25 bg-green-950/10 p-4 text-center text-sm text-green-200">
+                No failed requests. Everything looks healthy.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </section>
   );
 };
