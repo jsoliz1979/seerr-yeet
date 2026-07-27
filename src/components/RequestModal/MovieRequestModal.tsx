@@ -25,7 +25,8 @@ import useSWR, { mutate } from 'swr';
 
 const messages = defineMessages('components.RequestModal', {
   requestadmin: 'This request will be approved automatically.',
-  requestSuccess: '<strong>{title}</strong> requested successfully!',
+  requestSuccess:
+    '✨ <strong>{title}</strong> was requested! We will keep tracking it here, so there is no need to request it again.',
   requestCancel: 'Request for <strong>{title}</strong> canceled.',
   requestmovietitle: 'Request Movie',
   requestmovie4ktitle: 'Request Movie in 4K',

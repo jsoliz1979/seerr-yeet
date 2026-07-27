@@ -25,7 +25,7 @@ import {
 import type { SortOptions as TMDBSortOptions } from '@server/api/themoviedb';
 import type { TvResult } from '@server/models/Search';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
 
 const messages = defineMessages('components.Discover.DiscoverTv', {
@@ -88,6 +88,7 @@ const DiscoverTv = () => {
   const router = useRouter();
   const [showFilters, setShowFilters] = useState(false);
   const [density, setDensity] = useState<CatalogDensity>('comfortable');
+  const restoredFilters = useRef(false);
   const preparedFilters = prepareFilterValues(router.query);
   const updateQueryParams = useUpdateQueryParams({});
   const batchUpdateQueryParams = useBatchUpdateQueryParams({});
@@ -137,7 +138,33 @@ const DiscoverTv = () => {
     if (savedDensity === 'comfortable' || savedDensity === 'compact') {
       setDensity(savedDensity);
     }
+
+    const savedFilters = window.localStorage.getItem('xmage-series-filters');
+    if (savedFilters && Object.keys(router.query).length === 0) {
+      try {
+        const query = JSON.parse(savedFilters) as Record<string, string>;
+        if (Object.keys(query).length > 0) {
+          router.replace({ pathname: router.pathname, query }, undefined, {
+            shallow: true,
+          });
+        }
+      } catch {
+        window.localStorage.removeItem('xmage-series-filters');
+      }
+    }
+    restoredFilters.current = true;
+    // This intentionally restores once when the catalog opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (router.isReady && restoredFilters.current) {
+      window.localStorage.setItem(
+        'xmage-series-filters',
+        JSON.stringify(router.query)
+      );
+    }
+  }, [router.isReady, router.query]);
 
   const changeDensity = (nextDensity: CatalogDensity) => {
     setDensity(nextDensity);

@@ -1,9 +1,11 @@
 import Badge from '@app/components/Common/Badge';
 import { menuMessages } from '@app/components/Layout/Sidebar';
 import useClickOutside from '@app/hooks/useClickOutside';
+import useReadyRequestCount from '@app/hooks/useReadyRequestCount';
 import { Permission, useUser } from '@app/hooks/useUser';
 import { Transition } from '@headlessui/react';
 import {
+  AdjustmentsHorizontalIcon,
   ClockIcon,
   CogIcon,
   EllipsisHorizontalIcon,
@@ -11,17 +13,20 @@ import {
   EyeSlashIcon,
   FilmIcon,
   LightBulbIcon,
+  QuestionMarkCircleIcon,
   SparklesIcon,
   TvIcon,
   UsersIcon,
 } from '@heroicons/react/24/outline';
 import {
+  AdjustmentsHorizontalIcon as FilledAdjustmentsHorizontalIcon,
   ClockIcon as FilledClockIcon,
   CogIcon as FilledCogIcon,
   ExclamationTriangleIcon as FilledExclamationTriangleIcon,
   EyeSlashIcon as FilledEyeSlashIcon,
   FilmIcon as FilledFilmIcon,
   LightBulbIcon as FilledLightBulbIcon,
+  QuestionMarkCircleIcon as FilledQuestionMarkCircleIcon,
   SparklesIcon as FilledSparklesIcon,
   TvIcon as FilledTvIcon,
   UsersIcon as FilledUsersIcon,
@@ -63,6 +68,7 @@ const MobileMenu = ({
   const [isOpen, setIsOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const { hasPermission } = useUser();
+  const readyRequestCount = useReadyRequestCount();
   const router = useRouter();
   useClickOutside(ref, () => {
     setTimeout(() => {
@@ -95,6 +101,13 @@ const MobileMenu = ({
       svgIcon: <TvIcon className="h-6 w-6" />,
       svgIconSelected: <FilledTvIcon className="h-6 w-6" />,
       activeRegExp: /^\/discover\/tv$/,
+    },
+    {
+      href: '/discover/choose',
+      content: intl.formatMessage(menuMessages.choose),
+      svgIcon: <QuestionMarkCircleIcon className="h-6 w-6" />,
+      svgIconSelected: <FilledQuestionMarkCircleIcon className="h-6 w-6" />,
+      activeRegExp: /^\/discover\/choose$/,
     },
     {
       href: '/requests',
@@ -141,6 +154,20 @@ const MobileMenu = ({
       svgIcon: <LightBulbIcon className="h-6 w-6" />,
       svgIconSelected: <FilledLightBulbIcon className="h-6 w-6" />,
       activeRegExp: /^\/suggestions/,
+    },
+    {
+      href: '/preferences',
+      content: intl.formatMessage(menuMessages.preferences),
+      svgIcon: <AdjustmentsHorizontalIcon className="h-6 w-6" />,
+      svgIconSelected: <FilledAdjustmentsHorizontalIcon className="h-6 w-6" />,
+      activeRegExp: /^\/preferences/,
+    },
+    {
+      href: '/help',
+      content: intl.formatMessage(menuMessages.help),
+      svgIcon: <QuestionMarkCircleIcon className="h-6 w-6" />,
+      svgIconSelected: <FilledQuestionMarkCircleIcon className="h-6 w-6" />,
+      activeRegExp: /^\/help/,
     },
     {
       href: '/users',
@@ -248,11 +275,20 @@ const MobileMenu = ({
               })}
               <span className="ml-2">{link.content}</span>
               {link.href === '/requests' &&
-                pendingRequestsCount > 0 &&
-                hasPermission(Permission.MANAGE_REQUESTS) && (
+                ((pendingRequestsCount > 0 &&
+                  hasPermission(Permission.MANAGE_REQUESTS)) ||
+                  readyRequestCount > 0) && (
                   <div className="ml-auto flex">
-                    <Badge className="rounded-md border-indigo-500 bg-gradient-to-br from-indigo-600 to-purple-600">
-                      {pendingRequestsCount}
+                    <Badge
+                      className={`rounded-md ${
+                        readyRequestCount > 0
+                          ? 'border-green-400 bg-green-600'
+                          : 'border-indigo-500 bg-gradient-to-br from-indigo-600 to-purple-600'
+                      }`}
+                    >
+                      {readyRequestCount > 0
+                        ? `${readyRequestCount} READY`
+                        : pendingRequestsCount}
                     </Badge>
                   </div>
                 )}

@@ -729,6 +729,18 @@ const TvDetails = ({ tv }: TvDetailsProps) => {
           )}
         </div>
       </div>
+      {data.firstAirDate &&
+        new Date(`${data.firstAirDate}T12:00:00`).getTime() > Date.now() && (
+          <div className="mb-6 rounded-xl border border-purple-400/35 bg-purple-950/25 p-4 text-purple-100">
+            <div className="font-bold">
+              Premieres {intl.formatDate(data.firstAirDate)}
+            </div>
+            <div className="mt-1 text-sm text-purple-200/80">
+              You may request it now. The server will keep looking when episodes
+              become available, so please do not request it again.
+            </div>
+          </div>
+        )}
       <div className="media-overview">
         <div className="media-overview-left">
           {data.tagline && <div className="tagline">{data.tagline}</div>}

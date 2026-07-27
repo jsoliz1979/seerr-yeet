@@ -2,6 +2,7 @@ import useSearchInput from '@app/hooks/useSearchInput';
 import defineMessages from '@app/utils/defineMessages';
 import { XCircleIcon } from '@heroicons/react/24/outline';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/solid';
+import { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 
 const messages = defineMessages('components.Layout.SearchInput', {
@@ -11,6 +12,31 @@ const messages = defineMessages('components.Layout.SearchInput', {
 const SearchInput = () => {
   const intl = useIntl();
   const { searchValue, setSearchValue, setIsOpen, clear } = useSearchInput();
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+
+  useEffect(() => {
+    try {
+      setRecentSearches(
+        JSON.parse(window.localStorage.getItem('xmage-recent-searches') ?? '[]')
+      );
+    } catch {
+      setRecentSearches([]);
+    }
+  }, []);
+
+  const rememberSearch = () => {
+    const value = searchValue.trim();
+    if (!value) return;
+    const next = [
+      value,
+      ...recentSearches.filter(
+        (item) => item.toLowerCase() !== value.toLowerCase()
+      ),
+    ].slice(0, 6);
+    setRecentSearches(next);
+    window.localStorage.setItem('xmage-recent-searches', JSON.stringify(next));
+  };
+
   return (
     <div className="flex flex-1">
       <div className="flex w-full">
@@ -27,6 +53,7 @@ const SearchInput = () => {
             className="block w-full rounded-full border border-gray-600 bg-gray-900/80 py-2 pl-10 text-white placeholder-gray-300 hover:border-gray-500 focus:border-gray-500 focus:bg-gray-900 focus:placeholder-gray-400 focus:outline-none focus:ring-0 sm:text-base"
             placeholder={intl.formatMessage(messages.searchPlaceholder)}
             type="search"
+            list="xmage-recent-searches"
             autoComplete="off"
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
@@ -39,10 +66,16 @@ const SearchInput = () => {
             onKeyUp={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
+                rememberSearch();
                 (e.target as HTMLInputElement).blur();
               }
             }}
           />
+          <datalist id="xmage-recent-searches">
+            {recentSearches.map((search) => (
+              <option key={search} value={search} />
+            ))}
+          </datalist>
           {searchValue.length > 0 && (
             <button
               className="absolute inset-y-0 right-2 m-auto h-7 w-7 border-none p-1 text-gray-400 outline-none transition hover:text-white focus:border-none focus:outline-none"

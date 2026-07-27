@@ -25,7 +25,8 @@ import useSWR, { mutate } from 'swr';
 
 const messages = defineMessages('components.RequestModal', {
   requestadmin: 'This request will be approved automatically.',
-  requestSuccess: '<strong>{title}</strong> requested successfully!',
+  requestSuccess:
+    '✨ <strong>{title}</strong> was requested! We will keep tracking it here, so there is no need to request it again.',
   requestseriestitle: 'Request Series',
   requestseries4ktitle: 'Request Series in 4K',
   edit: 'Edit Request',
@@ -321,6 +322,19 @@ const TvRequestModal = ({
       selectedSeasons.length >= 0 &&
       selectedSeasons.length < unrequestedSeasons.length
     ) {
+      const seasonCount = unrequestedSeasons.filter(
+        (season) => season !== 0
+      ).length;
+
+      if (
+        seasonCount >= 4 &&
+        !window.confirm(
+          `Request all ${seasonCount} available seasons of ${data.name}? This can be a large download.`
+        )
+      ) {
+        return;
+      }
+
       setSelectedSeasons(unrequestedSeasons);
     } else {
       setSelectedSeasons([]);

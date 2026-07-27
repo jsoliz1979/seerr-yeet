@@ -688,6 +688,18 @@ const MovieDetails = ({ movie }: MovieDetailsProps) => {
             )}
         </div>
       </div>
+      {data.releaseDate &&
+        new Date(`${data.releaseDate}T12:00:00`).getTime() > Date.now() && (
+          <div className="mb-6 rounded-xl border border-purple-400/35 bg-purple-950/25 p-4 text-purple-100">
+            <div className="font-bold">
+              Coming {intl.formatDate(data.releaseDate)}
+            </div>
+            <div className="mt-1 text-sm text-purple-200/80">
+              You can request this movie now, but it cannot download until a
+              release becomes available. You will not need to request it again.
+            </div>
+          </div>
+        )}
       <div className="media-overview">
         <div className="media-overview-left">
           {data.tagline && <div className="tagline">{data.tagline}</div>}
@@ -760,7 +772,14 @@ const MovieDetails = ({ movie }: MovieDetailsProps) => {
                     />
                   </div>
                   <div className="relative z-10 flex h-full items-center justify-between p-4 text-gray-200 transition duration-300 group-hover:text-white">
-                    <div>{data.collection.name}</div>
+                    <div>
+                      <div className="font-semibold">
+                        {data.collection.name}
+                      </div>
+                      <div className="mt-1 text-xs text-gray-300">
+                        Explore the collection and see what is missing
+                      </div>
+                    </div>
                     <Button buttonSize="sm">
                       {intl.formatMessage(globalMessages.view)}
                     </Button>

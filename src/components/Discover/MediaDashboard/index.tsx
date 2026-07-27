@@ -1,7 +1,10 @@
+import PlainRequestStatus from '@app/components/Experience/PlainRequestStatus';
+import WhatsNew from '@app/components/Experience/WhatsNew';
 import useSettings from '@app/hooks/useSettings';
 import type { User } from '@app/hooks/useUser';
 import { Permission, useUser } from '@app/hooks/useUser';
 import {
+  AdjustmentsHorizontalIcon,
   ArrowTopRightOnSquareIcon,
   BellAlertIcon,
   CheckCircleIcon,
@@ -11,6 +14,7 @@ import {
   LightBulbIcon,
   PlayCircleIcon,
   PlusCircleIcon,
+  QuestionMarkCircleIcon,
   SignalIcon,
   SparklesIcon,
 } from '@heroicons/react/24/solid';
@@ -84,6 +88,9 @@ const getTimelineStep = (
   const mediaStatus = request.is4k
     ? request.media?.status4k
     : request.media?.status;
+  const downloads = request.is4k
+    ? request.media?.downloadStatus4k
+    : request.media?.downloadStatus;
 
   if (request.status === MediaRequestStatus.FAILED) return -1;
   if (request.status === MediaRequestStatus.PENDING) return 0;
@@ -94,6 +101,7 @@ const getTimelineStep = (
     return 3;
   }
   if (
+    (downloads?.length ?? 0) > 0 ||
     mediaStatus === MediaStatus.PROCESSING ||
     mediaStatus === MediaStatus.PARTIALLY_AVAILABLE
   ) {
@@ -130,6 +138,13 @@ const RequestSummary = ({
         ? 'Old Movies'
         : 'New Movies';
   const currentStep = getTimelineStep(request);
+  const downloads =
+    (request.is4k
+      ? request.media?.downloadStatus4k
+      : request.media?.downloadStatus) ?? [];
+  const mediaStatus = request.is4k
+    ? request.media?.status4k
+    : request.media?.status;
   const steps = ['Requested', 'Approved', 'Downloading', 'Available'];
 
   return (
@@ -157,12 +172,20 @@ const RequestSummary = ({
           <div className="truncate text-sm font-semibold text-gray-100">
             {title}
           </div>
-          <div
-            className={`mt-0.5 flex items-center gap-1 text-xs ${status.color}`}
-          >
-            <status.Icon className="h-3.5 w-3.5" />
-            {ready ? `Ready in Plex • ${plexLibrary}` : status.label}
-          </div>
+          {ready ? (
+            <div className="mt-0.5 flex items-center gap-1 text-xs text-green-300">
+              <status.Icon className="h-3.5 w-3.5" />
+              Ready in Plex • {plexLibrary}
+            </div>
+          ) : (
+            <PlainRequestStatus
+              compact
+              requestStatus={request.status}
+              mediaStatus={mediaStatus}
+              downloads={downloads}
+              releaseDate={details?.releaseDate ?? details?.firstAirDate}
+            />
+          )}
         </div>
         <ArrowTopRightOnSquareIcon className="h-4 w-4 text-gray-500" />
       </div>
@@ -190,6 +213,24 @@ const RequestSummary = ({
           ))}
         </div>
       )}
+      {!ready && downloads.length > 0 && (
+        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-700">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-purple-500"
+            style={{
+              width: `${Math.round(
+                ((downloads.reduce((sum, item) => sum + item.size, 0) -
+                  downloads.reduce((sum, item) => sum + item.sizeLeft, 0)) /
+                  Math.max(
+                    1,
+                    downloads.reduce((sum, item) => sum + item.size, 0)
+                  )) *
+                  100
+              )}%`,
+            }}
+          />
+        </div>
+      )}
     </Link>
   );
 };
@@ -198,6 +239,13 @@ const MediaDashboard = ({ user }: { user?: User }) => {
   const { hasPermission } = useUser();
   const { currentSettings } = useSettings();
   const isOwner = hasPermission(Permission.ADMIN);
+  const currentHour = new Date().getHours();
+  const greeting =
+    currentHour < 12
+      ? 'Good morning'
+      : currentHour < 18
+        ? 'Good afternoon'
+        : 'Good evening';
   const { data: requests } = useSWR<RequestResultsResponse>(
     user
       ? `/api/v1/request?filter=all&take=3&sort=added&skip=0&requestedBy=${user.id}`
@@ -234,7 +282,8 @@ const MediaDashboard = ({ user }: { user?: User }) => {
               Your media dashboard
             </div>
             <h1 className="text-3xl font-bold text-white sm:text-4xl">
-              Welcome back{user?.displayName ? `, ${user.displayName}` : ''}
+              {greeting}
+              {user?.displayName ? `, ${user.displayName}` : ''}
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-300 sm:text-base">
               Discover something new, follow your requests, and jump straight
@@ -275,6 +324,41 @@ const MediaDashboard = ({ user }: { user?: User }) => {
           </div>
         </div>
       </div>
+
+      <div className="mb-4 grid gap-3 sm:grid-cols-3">
+        <Link
+          href="/discover/choose"
+          className="rounded-xl border border-pink-500/30 bg-gradient-to-br from-pink-950/25 to-gray-800/60 p-4 transition hover:border-pink-400/60"
+        >
+          <QuestionMarkCircleIcon className="h-6 w-6 text-pink-300" />
+          <div className="mt-2 font-bold text-white">Help Me Choose</div>
+          <div className="mt-1 text-sm text-gray-400">
+            Get five picks based on your mood.
+          </div>
+        </Link>
+        <Link
+          href="/preferences"
+          className="rounded-xl border border-purple-500/30 bg-gradient-to-br from-purple-950/25 to-gray-800/60 p-4 transition hover:border-purple-400/60"
+        >
+          <AdjustmentsHorizontalIcon className="h-6 w-6 text-purple-300" />
+          <div className="mt-2 font-bold text-white">My Preferences</div>
+          <div className="mt-1 text-sm text-gray-400">
+            Tune genres, anime, and family suggestions.
+          </div>
+        </Link>
+        <Link
+          href="/help"
+          className="rounded-xl border border-cyan-500/30 bg-gradient-to-br from-cyan-950/25 to-gray-800/60 p-4 transition hover:border-cyan-400/60"
+        >
+          <LightBulbIcon className="h-6 w-6 text-cyan-300" />
+          <div className="mt-2 font-bold text-white">How It Works</div>
+          <div className="mt-1 text-sm text-gray-400">
+            Requests, notifications, and Plex libraries explained.
+          </div>
+        </Link>
+      </div>
+
+      <WhatsNew />
 
       {readyRequests && readyRequests.results.length > 0 && (
         <div className="mb-4 rounded-xl border border-green-500/25 bg-gradient-to-r from-green-950/25 to-cyan-950/15 p-4 shadow-lg">

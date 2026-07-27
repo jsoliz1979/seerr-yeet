@@ -2,16 +2,19 @@ import Badge from '@app/components/Common/Badge';
 import BrandLogo from '@app/components/Common/BrandLogo';
 import VersionStatus from '@app/components/Layout/VersionStatus';
 import useClickOutside from '@app/hooks/useClickOutside';
+import useReadyRequestCount from '@app/hooks/useReadyRequestCount';
 import { Permission, useUser } from '@app/hooks/useUser';
 import defineMessages from '@app/utils/defineMessages';
 import { Transition } from '@headlessui/react';
 import {
+  AdjustmentsHorizontalIcon,
   ClockIcon,
   CogIcon,
   ExclamationTriangleIcon,
   EyeSlashIcon,
   FilmIcon,
   LightBulbIcon,
+  QuestionMarkCircleIcon,
   SparklesIcon,
   TvIcon,
   UsersIcon,
@@ -32,6 +35,9 @@ export const menuMessages = defineMessages('components.Layout.Sidebar', {
   suggestions: 'Suggestions',
   users: 'Users',
   settings: 'Settings',
+  choose: 'Help Me Choose',
+  help: 'How It Works',
+  preferences: 'My Preferences',
 });
 
 interface SidebarProps {
@@ -74,6 +80,12 @@ const SidebarLinks: SidebarLinkProps[] = [
     activeRegExp: /^\/discover\/tv$/,
   },
   {
+    href: '/discover/choose',
+    messagesKey: 'choose',
+    svgIcon: <QuestionMarkCircleIcon className="mr-3 h-6 w-6" />,
+    activeRegExp: /^\/discover\/choose$/,
+  },
+  {
     href: '/requests',
     messagesKey: 'requests',
     svgIcon: <ClockIcon className="mr-3 h-6 w-6" />,
@@ -109,6 +121,18 @@ const SidebarLinks: SidebarLinkProps[] = [
     activeRegExp: /^\/suggestions/,
   },
   {
+    href: '/preferences',
+    messagesKey: 'preferences',
+    svgIcon: <AdjustmentsHorizontalIcon className="mr-3 h-6 w-6" />,
+    activeRegExp: /^\/preferences/,
+  },
+  {
+    href: '/help',
+    messagesKey: 'help',
+    svgIcon: <QuestionMarkCircleIcon className="mr-3 h-6 w-6" />,
+    activeRegExp: /^\/help/,
+  },
+  {
     href: '/users',
     messagesKey: 'users',
     svgIcon: <UsersIcon className="mr-3 h-6 w-6" />,
@@ -138,6 +162,7 @@ const Sidebar = ({
   const router = useRouter();
   const intl = useIntl();
   const { hasPermission } = useUser();
+  const readyRequestCount = useReadyRequestCount();
   useClickOutside(navRef, () => setClosed());
 
   useEffect(() => {
@@ -241,6 +266,12 @@ const Sidebar = ({
                                 NEW
                               </Badge>
                             )}
+                            {sidebarLink.messagesKey === 'requests' &&
+                              readyRequestCount > 0 && (
+                                <Badge className="ml-auto border-green-400 bg-green-600 text-white">
+                                  {readyRequestCount} READY
+                                </Badge>
+                              )}
                           </Link>
                         );
                       })}

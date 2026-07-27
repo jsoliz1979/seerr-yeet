@@ -51,8 +51,14 @@ const ListView = ({
   return (
     <>
       {isEmpty && (
-        <div className="mt-64 w-full text-center text-2xl text-gray-400">
-          {intl.formatMessage(globalMessages.noresults)}
+        <div className="mx-auto mt-16 max-w-xl rounded-xl border border-dashed border-gray-600 bg-gray-800/60 px-6 py-10 text-center">
+          <div className="text-xl font-semibold text-white">
+            {intl.formatMessage(globalMessages.noresults)}
+          </div>
+          <p className="mt-2 text-sm text-gray-300">
+            Nothing matched those choices. Try clearing a filter, changing the
+            date, or searching for another title.
+          </p>
         </div>
       )}
       <ul className={className ?? 'cards-vertical'}>
