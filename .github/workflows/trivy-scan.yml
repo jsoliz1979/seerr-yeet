@@ -47,10 +47,17 @@ jobs:
           restore-keys: |
             trivy-${{ runner.os }}-
 
+      - name: Build container image for scanning
+        run: |
+          docker build \
+            --build-arg COMMIT_TAG=${{ github.sha }} \
+            --tag seerr-yeet:trivy \
+            .
+
       - name: Run Trivy image scan
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          image-ref: ghcr.io/${{ github.repository }}:latest
+          image-ref: seerr-yeet:trivy
           format: sarif
           output: trivy.sarif
           ignore-unfixed: true
